@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import Alert from '../Components/Alert'; // Importa el componente Alert
 import { Link } from 'react-router-dom';
-import { setTokens } from '../Utils/auth.js';
+import { setTokens, setUserInfo, getUserName, getUserRole } from '../Utils/auth.js';
 import LogoITCA from '../assets/LogoITCA_Web.png'
 
 export default function Login() {
@@ -26,22 +26,23 @@ export default function Login() {
             if (response.ok) {
                 const data = await response.json();
                 setTokens(data.access_token, data.refresh_token);
+                setUserInfo(data.user);
                 navigate('/dashboard');
             } else {
                 Alert({
-                    title: 'Error',
+                    title: '',
                     text: 'Email o Password Invalidos',
                     icon: 'error',
-                    background: '#803cae',
+                    background: '#4b7af0',
                     color: 'white',
                 });
             }
         } catch (error) {
             Alert({
                 title: 'Error',
-                text: 'Error al iniciar sesión',
+                text: error,
                 icon: 'error',
-                background: '#803cae',
+                background: '#4b7af0',
                 color: 'white',
             });
         }
@@ -52,8 +53,8 @@ export default function Login() {
             <div className="w-full max-w-sm bg-Paleta-Blanco rounded-lg shadow-md p-6">
                 <div className="text-center mb-6">
                     <img src={LogoITCA} alt="Logo ITCA" />
-                    <h2 className="mt-4 text-3xl font-bold text-black">
-                        Login!
+                    <h2 className="mt-4 text-xl font-bold text-black">
+                        Ingresa tus credenciales
                     </h2>
                 </div>
 
@@ -61,7 +62,7 @@ export default function Login() {
 
                 <form onSubmit={handleLogin}>
                     <div className="mb-4">
-                        <label htmlFor="username" className="block text-gray-700">Nombre de Usuario</label>
+                        <label htmlFor="username" className="block text-gray-700">Email</label>
                         <input
                             type="email"
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-Paleta-Celeste focus:border-Paleta-Celeste placeholder-gray-500"
@@ -96,6 +97,8 @@ export default function Login() {
                     </div>
                 </form>
             </div>
+
+            
         </div>
     );
 }

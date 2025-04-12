@@ -49,10 +49,10 @@ export default function Register() {
                 }, 3000); // 3000 ms = 3 segundos
 
             } else {
-                setMessage('Error al registrar usuario: ' + responseData.message);
+                setMessage('Error al registrar usuario: ' + responseData.error);
                 Alert({
-                    title: 'Error',
-                    text: responseData.message,
+                    title: '',
+                    text: responseData.error,
                     icon: 'error',
                     background: '#d62f0c',
                     color: 'white',
@@ -74,7 +74,7 @@ export default function Register() {
     const onError = (errors) => {
         if (errors.name) {
             Alert({
-                title: 'Error en el campo Nombre',
+                title: 'Campo Nombre',
                 text: errors.name.message,
                 icon: 'error',
                 background: '#d62f0c',
@@ -82,7 +82,7 @@ export default function Register() {
             });
         } else if (errors.email) {
             Alert({
-                title: 'Error en el campo Email',
+                title: 'Campo Email',
                 text: errors.email.message,
                 icon: 'error',
                 background: '#d62f0c',
@@ -90,7 +90,7 @@ export default function Register() {
             });
         } else if (errors.password) {
             Alert({
-                title: 'Error en el campo Contraseña',
+                title: 'Campo Contraseña',
                 text: errors.password.message,
                 icon: 'error',
                 background: '#d62f0c',
@@ -103,7 +103,7 @@ export default function Register() {
         <div className="flex items-center justify-center text-black bg-Paleta-GrisClaro min-h-screen">
             <div className="w-full max-w-md bg-Paleta-Blanco rounded-lg shadow-lg p-8">
                 <img src={LogoITCA} alt="Logo ITCA" />
-                <h2 className="mt-4 text-3xl font-bold text-center mb-6 text-black">Registro de Usuarios</h2>
+                <h2 className="mt-4 text-xl font-bold text-black text-center mb-4">Registro de Usuarios</h2>
                 <hr className="mb-4" />
                 <form onSubmit={handleSubmit(handleRegister, onError)}>
                     <div className="mb-4">

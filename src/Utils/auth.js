@@ -2,6 +2,8 @@
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
+const USER_NAME = 'user_name';
+const USER_ROLE = 'user_role';
 
 /**
  * Guarda los tokens en localStorage
@@ -31,6 +33,8 @@ export const getRefreshToken = () => {
 export const clearTokens = () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_NAME);
+    localStorage.removeItem(USER_ROLE);
 };
 
 /**
@@ -39,6 +43,29 @@ export const clearTokens = () => {
 export const isAuthenticated = () => {
     return !!getAccessToken(); // true si existe el token
 };
+
+/**
+ * Guarda info del usuario en localStorage
+ */
+export const setUserInfo = (userInfo) => {
+    localStorage.setItem(USER_NAME, userInfo.name + ' ' + userInfo.lastname);
+    localStorage.setItem(USER_ROLE, userInfo.role);
+};
+
+/**
+ * Obtiene la info del usuario actual
+ */
+export const getUserName = () => {
+    return localStorage.getItem(USER_NAME);
+};
+
+/**
+ * Obtiene la info del usuario actual
+ */
+export const getUserRole = () => {
+    return localStorage.getItem(USER_ROLE);
+};
+
 
 /**
  * Redirige al login y limpia tokens
