@@ -1,5 +1,4 @@
-// App.jsx
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import Login from './Auth/Login';
 import Register from './Auth/Register';
@@ -7,10 +6,12 @@ import PageNotFound from './Others/PageNotFound';
 import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
+import StudyMaterials from './Dashboards/Students/StudyMaterials';
+import NewTest from './Dashboards/Students/NewTest';
+import QuestionBank from './Dashboards/Admin/QuestionBank';
 
 import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
-
 
 export default function App() {
   return (
@@ -22,38 +23,39 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Layout general para rutas protegidas */}
+          {/* Rutas protegidas */}
+
           <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            {/* Redirección automática según el rol */}
+            <Route
+              index
+              element={
+                <ProtectedRoute>
+                  {() => {
+                    const role = getUserRole()?.toLowerCase();
+                    return <Navigate to={`/dashboard/${role}`} replace />;
+                  }}
+                </ProtectedRoute>
+              }
+            />
 
             {/* Rutas para admin */}
-            <Route path="admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }>
+            <Route path="admin">
+              <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
-              {/* <Route path="reports" element={<AdminUsers />} />  */}
+              <Route path="questionsbank" element={<QuestionBank />} />
             </Route>
-
-
-
 
             {/* Rutas para student */}
-            <Route path="student"
-              element={
-                <ProtectedRoute allowedRoles={['student']}>
-                  <StudentDashboard />
-                </ProtectedRoute>
-              }>
-              {/* <Route path="courses" element={<StudentCourses />} />
-              <Route path="grades" element={<StudentGrades />} /> */}
+            <Route path="student" >
+              <Route index element={<StudentDashboard />} />
+              <Route path="materials" element={<StudyMaterials />} />
+              <Route path="newtest" element={<NewTest />} />
             </Route>
+
+            {/* Página 404 */}
+            <Route path="*" element={<PageNotFound />} />
           </Route>
-
-
-          {/* Página 404 */}
-          <Route path="*" element={<PageNotFound />} />
         </Routes>
       </BrowserRouter>
     </section>

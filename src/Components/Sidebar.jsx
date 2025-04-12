@@ -92,7 +92,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
         </svg>
       </button> */}
 
-            <Link to="/dashboard" className='grid items-center text-center  border-b border-gray-700'>
+            <Link to="/dashboard/admin" className='grid items-center text-center  border-b border-gray-700'>
                 <div className="px-5 pt-5 pb-2 flex items-center space-x-3">
                     <img src={LogoItca} className='w-max' alt="LogoItca" />
                 </div>
@@ -104,7 +104,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
             <nav className="p-4">
 
                 {/* {ITEMS PARA USUARIO ADMIN} */}
-                {userRole === 'ADMIN' ? (
+                {userRole?.toLowerCase() === 'admin' ? (
                     <ul>
                         <li>
                             <Link
@@ -114,6 +114,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                             >
                                 <FiUsers className="w-5 h-5" />
                                 <span className="ml-3">Administrar Usuarios</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/dashboard/admin/questionsbank"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiBox className="w-5 h-5" />
+                                <span className="ml-3">Banco De Preguntas</span>
                             </Link>
                         </li>
                         {/* <li>
@@ -134,7 +144,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                         <ul>
                             <li>
                                 <Link
-                                    to="/dashboard/student/test"
+                                    to="/dashboard/student/newtest"
                                     className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
                                     onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                                 >
@@ -144,7 +154,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                             </li>
                             <li>
                                 <Link
-                                    to="/dashboard/student/reports"
+                                    to="/dashboard/student/materials"
                                     className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
                                     onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                                 >

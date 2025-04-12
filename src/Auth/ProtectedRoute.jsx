@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { fetchWithAuth } from '../utils/fetchWithAuth.js'; // Importamos el helper
+import { fetchWithAuth } from '../utils/fetchWithAuth.js';
+import { getUserRole } from '../Utils/auth';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
         const verifyToken = async () => {
@@ -14,6 +16,7 @@ const ProtectedRoute = ({ children }) => {
 
                 if (response.ok) {
                     setIsAuthenticated(true);
+                    setUserRole(getUserRole());
                 } else {
                     setIsAuthenticated(false);
                 }
@@ -39,6 +42,11 @@ const ProtectedRoute = ({ children }) => {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
+    }
+
+    // Verificación de roles si se especifican
+    if (allowedRoles && !allowedRoles.includes(userRole?.toLowerCase())) {
+        return <Navigate to={`/dashboard/${userRole?.toLowerCase()}`} replace />;
     }
 
     return children;

@@ -27,7 +27,8 @@ export default function Login() {
                 const data = await response.json();
                 setTokens(data.access_token, data.refresh_token);
                 setUserInfo(data.user);
-                navigate('/dashboard');
+                const role = getUserRole().toLowerCase();
+                navigate(`/dashboard/${role}`);
             } else {
                 Alert({
                     title: '',
