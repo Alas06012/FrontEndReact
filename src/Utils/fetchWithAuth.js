@@ -15,7 +15,7 @@ export const fetchWithAuth = async (url, options = {}) => {
 
     if (response.status === 401 && refreshToken) {
         // Token expirado, intentar refresh
-        const refreshResponse = await fetch('http://localhost:5000/auth/refresh', {
+        const refreshResponse = await fetch('http://host.docker.internal:5000/auth/refresh', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`,

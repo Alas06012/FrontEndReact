@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     useEffect(() => {
         const verifyToken = async () => {
             try {
-                const response = await fetchWithAuth('http://localhost:5000/auth/verify', {
+                const response = await fetchWithAuth('http://host.docker.internal:5000/auth/verify', {
                     method: 'GET',
                 });
 
