@@ -16,11 +16,7 @@ export default function Login() {
 
         try {
 
-<<<<<<< Updated upstream
-            const response = await fetch('http://host.docker.internal:5000/login', {
-=======
             const response = await fetch(`${API_URL}/login`, {
->>>>>>> Stashed changes
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

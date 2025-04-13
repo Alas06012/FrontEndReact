@@ -12,11 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     useEffect(() => {
         const verifyToken = async () => {
             try {
-<<<<<<< Updated upstream
-                const response = await fetchWithAuth('http://host.docker.internal:5000/auth/verify', {
-=======
                 const response = await fetchWithAuth(`${API_URL}/auth/verify`, {
->>>>>>> Stashed changes
                     method: 'GET',
                 });
 

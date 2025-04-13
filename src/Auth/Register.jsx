@@ -22,11 +22,7 @@ export default function Register() {
         };
 
         try {
-<<<<<<< Updated upstream
-            const response = await fetch('http://host.docker.internal:5000/register', {
-=======
             const response = await fetch(`${API_URL}/register`, {
->>>>>>> Stashed changes
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
