@@ -1,5 +1,5 @@
 # Etapa 1: Construcción
-FROM node:20-alpine AS build
+FROM node:23-slim AS build
 
 # Crear directorio de la app
 WORKDIR /app
