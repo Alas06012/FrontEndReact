@@ -4,6 +4,7 @@ import Alert from '../Components/Alert'; // Importa el componente Alert
 import { Link } from 'react-router-dom';
 import { setTokens, setUserInfo, getUserName, getUserRole } from '../Utils/auth.js';
 import LogoITCA from '../assets/LogoITCA_Web.png'
+import { API_URL } from '/config.js';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -15,7 +16,11 @@ export default function Login() {
 
         try {
 
+<<<<<<< Updated upstream
             const response = await fetch('http://host.docker.internal:5000/login', {
+=======
+            const response = await fetch(`${API_URL}/login`, {
+>>>>>>> Stashed changes
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

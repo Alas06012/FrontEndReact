@@ -1,5 +1,7 @@
 // fetchWithAuth.js
 import { getAccessToken, getRefreshToken, setTokens, logout } from '../Utils/auth';
+import { API_URL } from '/config.js';
+
 
 export const fetchWithAuth = async (url, options = {}) => {
     const token = getAccessToken();
@@ -16,6 +18,9 @@ export const fetchWithAuth = async (url, options = {}) => {
     if (response.status === 401 && refreshToken) {
         // Token expirado, intentar refresh
         const refreshResponse = await fetch('http://host.docker.internal:5000/auth/refresh', {
+=======
+        const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+>>>>>>> Stashed changes
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`,

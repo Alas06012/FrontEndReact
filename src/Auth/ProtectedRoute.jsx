@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { fetchWithAuth } from '../Utils/fetchWithAuth.js';
 import { getUserRole } from '../Utils/auth';
+import { API_URL } from '/config.js';
+
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -10,7 +12,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     useEffect(() => {
         const verifyToken = async () => {
             try {
+<<<<<<< Updated upstream
                 const response = await fetchWithAuth('http://host.docker.internal:5000/auth/verify', {
+=======
+                const response = await fetchWithAuth(`${API_URL}/auth/verify`, {
+>>>>>>> Stashed changes
                     method: 'GET',
                 });
 

@@ -3,7 +3,9 @@ import { useForm } from 'react-hook-form';
 import Alert from '../Components/Alert'; // Importa el componente Alert
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import LogoITCA from '../assets/LogoITCA_Web.png'
+import LogoITCA from '../assets/LogoITCA_Web.png';
+import { API_URL } from '/config.js';
+
 
 export default function Register() {
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -20,7 +22,11 @@ export default function Register() {
         };
 
         try {
+<<<<<<< Updated upstream
             const response = await fetch('http://host.docker.internal:5000/register', {
+=======
+            const response = await fetch(`${API_URL}/register`, {
+>>>>>>> Stashed changes
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
