@@ -17,6 +17,7 @@ export const fetchWithAuth = async (url, options = {}) => {
 
     if (response.status === 401 && refreshToken) {
         // Token expirado, intentar refresh
+<<<<<<< Updated upstream
         const refreshResponse = await fetch('http://host.docker.internal:5000/auth/refresh', {
 =======
         const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
