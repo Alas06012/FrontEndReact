@@ -1,6 +1,5 @@
-// src/config.js
-const host = import.meta.env.VITE_API_HOST;
-const lb_type = import.meta.env.VITE_API_LB_TYPE;
-const port = import.meta.env.VITE_API_PORT;
 
-export const API_URL = `${lb_type}://${host}:${port}`;
+// src/config.js
+export const API_URL = window.env.VITE_API_PORT 
+  ? `${window.env.VITE_API_LB_TYPE}://${window.env.VITE_API_HOST}:${window.env.VITE_API_PORT}`
+  : `${window.env.VITE_API_LB_TYPE}://${window.env.VITE_API_HOST}`;

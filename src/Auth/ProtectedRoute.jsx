@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { fetchWithAuth } from '../Utils/fetchWithAuth.js';
 import { getUserRole } from '../Utils/auth';
-import { API_URL } from '/config.js';
+import { API_URL } from '../../config.js';
 
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
