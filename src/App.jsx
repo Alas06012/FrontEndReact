@@ -5,10 +5,10 @@ import Register from './Auth/Register';
 import PageNotFound from './Others/PageNotFound';
 import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
-import UsersAdmin from './Dashboards/Admin/Users/UsersAdmin';
+import UsersAdmin from './Dashboards/Admin/UsersAdmin';
 import StudyMaterials from './Dashboards/Students/StudyMaterials';
 import NewTest from './Dashboards/Students/NewTest';
-import QuestionBank from './Dashboards/Admin/QuestionsAnswers/QuestionBank';
+import QuestionBank from './Dashboards/Admin/QuestionBank';
 
 import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
