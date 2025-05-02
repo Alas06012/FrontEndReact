@@ -13,6 +13,8 @@ import QuestionBank from './Dashboards/Admin/QuestionBank';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
 
+import TitlesAdmin from './Dashboards/Admin/TitlesAdmin';
+
 export default function App() {
   return (
     <section className='router-container'>
@@ -44,6 +46,7 @@ export default function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
               <Route path="questionsbank" element={<QuestionBank />} />
+              <Route path="TitlesAdmin" element={<TitlesAdmin />} />
             </Route>
 
             {/* Rutas para student */}
