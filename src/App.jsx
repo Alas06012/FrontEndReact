@@ -13,7 +13,7 @@ import QuestionBank from './Dashboards/Admin/QuestionBank';
 import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
 
-import TitlesAdmin from './Dashboards/Admin/TitlesAdmin';
+import TitlesAdmin from './Dashboards/Admin/questions_titles/TitlesAdmin';
 
 export default function App() {
   return (
