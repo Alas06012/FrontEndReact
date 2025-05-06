@@ -41,6 +41,13 @@ const Form = ({ fields, onSubmit, initialData = {}, onCancel, submitText = 'Subm
                 <option key={optIndex} value={option.value}>{option.label}</option>
               ))}
             </select>
+          ) : field.type === 'textarea' ? (
+            <textarea
+              {...register(field.name, field.validation || {})}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-Paleta-Celeste focus:border-Paleta-Celeste placeholder-gray-500"
+              placeholder={`Ingrese ${field.label.toLowerCase()}`}
+              rows="4"
+            />
           ) : (
             <input
               type={field.type || 'text'}

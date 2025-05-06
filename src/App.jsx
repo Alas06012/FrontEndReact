@@ -6,6 +6,7 @@ import PageNotFound from './Others/PageNotFound';
 import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
+import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
 import StudyMaterials from './Dashboards/Students/StudyMaterials';
 import NewTest from './Dashboards/Students/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="admin">
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
+              <Route path="prompts" element={<Prompts />} />
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
             </Route>
