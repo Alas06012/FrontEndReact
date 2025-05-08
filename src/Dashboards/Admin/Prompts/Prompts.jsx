@@ -145,6 +145,7 @@ const Prompts = () => {
         fetchPrompts();
         setShowModal(false);
         setEditPrompt(null);
+        setViewFullPrompt(null); // Asegúrate de limpiar viewFullPrompt después de guardar
       } else {
         const errorData = await response.json();
         Alert({
@@ -225,11 +226,13 @@ const Prompts = () => {
   // Abrir el modal para crear o editar
   const openModal = (prompt = null) => {
     setEditPrompt(prompt);
+    setViewFullPrompt(null); // Limpiar viewFullPrompt al abrir el modal para crear/editar
     setShowModal(true);
   };
 
   // Abrir modal para ver el contenido completo
   const openViewModal = (prompt) => {
+    setEditPrompt(null); // Limpiar editPrompt al abrir el modal para ver contenido completo
     setViewFullPrompt(prompt);
     setShowModal(true);
   };
@@ -279,8 +282,6 @@ const Prompts = () => {
         </span>
       ),
     },
-    { header: 'Creado', key: 'created_at' },
-    { header: 'Actualizado', key: 'updated_at' },
   ];
 
   // Configuración de campos para el formulario de creación/edición
@@ -409,7 +410,7 @@ const Prompts = () => {
             editPrompt
               ? 'Edit Prompt'
               : viewFullPrompt
-              ? 'Ver Contenido Completo'
+              ? 'Contenido Completo'
               : 'Create Prompt'
           }
         >
@@ -431,6 +432,7 @@ const Prompts = () => {
               onCancel={() => {
                 setShowModal(false);
                 setEditPrompt(null);
+                setViewFullPrompt(null); // Limpiar viewFullPrompt al cancelar
               }}
               submitText={editPrompt ? 'Actualizar' : 'Crear'}
               layout="grid-cols-1"
@@ -441,12 +443,14 @@ const Prompts = () => {
               <div className="bg-gray-100 p-4 rounded-md border border-gray-300">
                 <p className="whitespace-pre-wrap break-words text-gray-800">{viewFullPrompt.prompt_value}</p>
               </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="mt-4 py-2 px-4 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400 transition duration-300 ease-in-out"
-              >
-                Cerrar
-              </button>
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="py-2 px-4 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400 transition duration-300 ease-in-out"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           )}
         </Modal>
