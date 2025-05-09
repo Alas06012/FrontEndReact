@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '/config.js';
-import Alert from '../../Components/Alert';
-import { getAccessToken } from '../../Utils/auth';
+import Alert from '../../../Components/Alert';
+import { getAccessToken } from '../../../Utils/auth';
 import TitleForm from './TitleForm';
 import TitleTable from './TitleTable';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
