@@ -15,10 +15,7 @@ import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
 
 import TitlesAdmin from './Dashboards/Admin/questions_titles/TitlesAdmin';
-<<<<<<< HEAD
 import QuestionsAdmin from './Dashboards/Admin/Questions/QuestionAdmin';
-=======
->>>>>>> ed49b39157a639cb6a102d83567d39b795767b0d
 
 export default function App() {
   return (
