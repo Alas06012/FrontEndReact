@@ -10,7 +10,8 @@ import {
     FiCalendar,
     FiTool,
     FiLogOut,
-    FiUsers
+    FiUsers,
+    FiFileText,
 } from 'react-icons/fi';
 import { logout } from '../Utils/auth';
 import LogoItca from '../assets/LogoITCA_Web.png'
@@ -114,6 +115,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                             >
                                 <FiUsers className="w-5 h-5" />
                                 <span className="ml-3">Administrar Usuarios</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/dashboard/admin/prompts"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiFileText className="w-5 h-5" />
+                                <span className="ml-3">Administrar Prompts</span>
                             </Link>
                         </li>
                         <li>

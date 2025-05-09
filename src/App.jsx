@@ -6,6 +6,7 @@ import PageNotFound from './Others/PageNotFound';
 import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
+import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
 import StudyMaterials from './Dashboards/Students/StudyMaterials';
 import NewTest from './Dashboards/Students/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
@@ -14,7 +15,10 @@ import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
 
 import TitlesAdmin from './Dashboards/Admin/questions_titles/TitlesAdmin';
+<<<<<<< HEAD
 import QuestionsAdmin from './Dashboards/Admin/Questions/QuestionAdmin';
+=======
+>>>>>>> ed49b39157a639cb6a102d83567d39b795767b0d
 
 export default function App() {
   return (
@@ -46,6 +50,7 @@ export default function App() {
             <Route path="admin">
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
+              <Route path="prompts" element={<Prompts />} />
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
               <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />
