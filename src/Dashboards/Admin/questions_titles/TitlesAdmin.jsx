@@ -10,8 +10,8 @@ import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-xl p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+     <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-6">
         <button
           className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
           onClick={onClose}

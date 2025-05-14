@@ -149,6 +149,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                         </li>
                         <li>
                             <Link
+                                to="/dashboard/admin/QuestionsAdmin"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiBox className="w-5 h-5" />
+                                <span className="ml-3">Questions Admin</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
                                 to="/dashboard/admin/questionsbank"
                                 className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}

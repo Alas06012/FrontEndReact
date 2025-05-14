@@ -16,6 +16,7 @@ import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
 
 import TitlesAdmin from './Dashboards/Admin/questions_titles/TitlesAdmin';
+import QuestionsAdmin from './Dashboards/Admin/Questions/QuestionAdmin';
 
 export default function App() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="study_materials" element={<StudyMaterials />} />
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
+              <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />
             </Route>
 
             {/* Rutas para student */}
