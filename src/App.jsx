@@ -7,7 +7,8 @@ import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
 import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
-import StudyMaterials from './Dashboards/Students/StudyMaterials';
+//import StudyMaterials from './Dashboards/Students/StudyMaterials';
+import StudyMaterials from '../src/Dashboards/Admin/study_materials/StudyMaterials';
 import NewTest from './Dashboards/Students/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
 
@@ -47,6 +48,7 @@ export default function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
               <Route path="prompts" element={<Prompts />} />
+              <Route path="study_materials" element={<StudyMaterials />} />
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
             </Route>

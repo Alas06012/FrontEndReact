@@ -119,6 +119,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                         </li>
                         <li>
                             <Link
+                                to="/dashboard/admin/study_materials"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiFileText className="w-5 h-5" />
+                                <span className="ml-3">Administrar materiales de estudio</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
                                 to="/dashboard/admin/prompts"
                                 className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
