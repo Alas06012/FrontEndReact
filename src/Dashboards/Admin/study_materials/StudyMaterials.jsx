@@ -187,12 +187,42 @@ const StudyMaterials = () => {
         // Modo creación: enviar datos como FormData con archivo
         const endpoint = '/materials/create';
         const formData = new FormData();
-        formData.append('studymaterial_title', data.title);
-        formData.append('studymaterial_desc', data.description);
-        formData.append('studymaterial_type', data.type);
-        formData.append('level_fk', data.level);
-        formData.append('studymaterial_tags', data.tags);
-        formData.append('file', data.file);
+
+        // Validar y agregar los campos al FormData
+        formData.append('studymaterial_title', data.title || '');
+        formData.append('studymaterial_desc', data.description || '');
+        formData.append('studymaterial_type', data.type || '');
+        formData.append('level_fk', data.level || '');
+        formData.append('studymaterial_tags', data.tags || '');
+
+        // Manejo del archivo
+        const file = data.file?.[0]; // FileList, tomamos el primer archivo
+        if (!file) {
+          Alert({
+            title: 'Error',
+            text: 'Please select a file to upload',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          return;
+        }
+
+        // Validar extensión del archivo en el frontend
+        const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'mp4', 'mov'];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(fileExtension)) {
+          Alert({
+            title: 'Error',
+            text: 'File type not allowed. Allowed types: pdf, doc, docx, ppt, pptx, mp4, mov',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          return;
+        }
+
+        formData.append('file', file);
 
         const response = await fetch(`${API_URL}${endpoint}`, {
           method: 'POST',
@@ -229,7 +259,7 @@ const StudyMaterials = () => {
     } catch (error) {
       Alert({
         title: 'Error',
-        text: 'Network error occurred',
+        text: `Network error occurred: ${error.message}`,
         icon: 'error',
         background: '#4b7af0',
         color: 'white',
@@ -400,7 +430,17 @@ const StudyMaterials = () => {
       label: 'File',
       type: 'file',
       accept: '.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mov',
-      validation: { required: editMaterial ? false : 'File is required' },
+      validation: { 
+        required: editMaterial ? false : 'File is required',
+        validate: (files) => {
+          if (editMaterial) return true; // No validar en modo edición
+          if (!files || files.length === 0) return 'File is required';
+          const file = files[0];
+          const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'mp4', 'mov'];
+          const fileExtension = file.name.split('.').pop().toLowerCase();
+          return allowedExtensions.includes(fileExtension) || 'File type not allowed';
+        },
+      },
       disabled: !!editMaterial, // Deshabilitar en modo edición
     },
     {
