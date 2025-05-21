@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 
-const Form = ({ fields, onSubmit, initialData = {}, onCancel, submitText = 'Submit', layout = 'grid-cols-1', cancelText = 'Cancelar', resetForm }) => {
+const Form = ({ fields, onSubmit, initialData = {}, onCancel, submitText = 'Submit', layout = 'grid-cols-1', cancelText = 'Cancel', resetForm }) => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: fields.reduce((acc, field) => ({
       ...acc,

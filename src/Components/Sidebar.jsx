@@ -12,11 +12,15 @@ import {
     FiLogOut,
     FiUsers,
     FiFileText,
+    FiEdit, FiBookOpen, FiClipboard, FiBook,
 } from 'react-icons/fi';
 import { logout } from '../Utils/auth';
 import LogoItca from '../assets/LogoITCA_Web.png'
 import Alert from './Alert';
 import { useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+
+
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
     const sidebarRef = useRef(null);
@@ -41,15 +45,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
 
     const handleLogout = async () => {
         const result = await Alert({
-            title: 'Cerrar sesión',
-            text: '¿Estás seguro de que deseas salir?',
+            title: 'Log out',
+            text: 'Are you sure you want to log out?',
             icon: 'question',
             type: 'confirm',
-            confirmButtonText: 'Sí, salir',
-            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Yes, log out',
+            cancelButtonText: 'Cancel',
             background: '#1e293b', // slate-800
             color: 'white'
         });
+
 
         if (result.isConfirmed) {
             try {
@@ -66,7 +71,15 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
         }
     };
 
+    const location = useLocation();
+    const path = location.pathname;
 
+    const isAdminMenuOpen = path.startsWith('/dashboard/admin/users') || path.startsWith('/dashboard/admin/prompts');
+    const isBancoMenuOpen = path.includes('/dashboard/admin/study_materials') || path.includes('/dashboard/admin/questionsbank') || path.includes('/dashboard/admin/QuestionsAdmin') || path.includes('/dashboard/admin/TitlesAdmin');
+
+    const isAdmin = userRole.toLowerCase() === 'admin';
+    const isTeacher = userRole.toLowerCase() === 'teacher';
+    const isStudent = userRole.toLowerCase() === 'student';
 
     return (
         <aside
@@ -104,108 +117,142 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
 
             <nav className="p-4">
 
-                {/* {ITEMS PARA USUARIO ADMIN} */}
-                {userRole?.toLowerCase() === 'admin' ? (
-                    <ul>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/users"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiUsers className="w-5 h-5" />
-                                <span className="ml-3">Administrar Usuarios</span>
-                            </Link>
+                <ul className="space-y-2">
+                    {/* ADMINISTRACIÓN (solo admin) */}
+                    {isAdmin && (
+                        <li className="group">
+                            <details open={isAdminMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
+                                <summary className="flex items-center justify-between p-3 hover:bg-gray-600 cursor-pointer">
+                                    <div className="flex items-center">
+                                        <FiSettings className="w-5 h-5" />
+                                        <span className="ml-3">Administration</span>
+                                    </div>
+                                    <svg
+                                        className="w-4 h-4 ml-2 transition-transform duration-300 group-open:rotate-90"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </summary>
+                                <ul className="pl-6 py-2 space-y-1">
+                                    <li>
+                                        <NavLink
+                                            to="/dashboard/admin/users"
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                            }
+                                        >
+                                            <FiUsers className="w-4 h-4" />
+                                            Users
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            to="/dashboard/admin/prompts"
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                            }
+                                        >
+                                            <FiEdit className="w-4 h-4" />
+                                            Prompts
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </details>
                         </li>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/study_materials"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiFileText className="w-5 h-5" />
-                                <span className="ml-3">Administrar materiales de estudio</span>
-                            </Link>
+                    )}
+
+                    {/* BANCO DE PREGUNTAS (admin y teacher) */}
+                    {(isAdmin || isTeacher) && (
+                        <li className="group">
+                            <details open={isBancoMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
+                                <summary className="flex items-center justify-between p-3 hover:bg-gray-600 cursor-pointer">
+                                    <div className="flex items-center">
+                                        <FiBookOpen className="w-5 h-5" />
+                                        <span className="ml-3">Question Pool</span>
+                                    </div>
+                                    <svg
+                                        className="w-4 h-4 ml-2 transition-transform duration-300 group-open:rotate-90"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </summary>
+                                <ul className="pl-6 py-2 space-y-1">
+                                    <li>
+                                        <NavLink
+                                            to="/dashboard/admin/study_materials"
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                            }
+                                        >
+                                            <FiFileText className="w-4 h-4" />
+                                            Study Materials
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            to="/dashboard/admin/TitlesAdmin"
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                            }
+                                        >
+                                            <FiBox className="w-4 h-4" />
+                                            Question Titles
+                                        </NavLink>
+                                    </li>
+                                    <li>
+                                        <NavLink
+                                            to="/dashboard/admin/QuestionsAdmin"
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                            }
+                                        >
+                                            <FiBox className="w-4 h-4" />
+                                            Questions - Answers
+                                        </NavLink>
+                                    </li>
+                                </ul>
+                            </details>
                         </li>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/prompts"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiFileText className="w-5 h-5" />
-                                <span className="ml-3">Administrar Prompts</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/TitlesAdmin"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiBox className="w-5 h-5" />
-                                <span className="ml-3">Titles Admin</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/QuestionsAdmin"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiBox className="w-5 h-5" />
-                                <span className="ml-3">Questions Admin</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/dashboard/admin/questionsbank"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiBox className="w-5 h-5" />
-                                <span className="ml-3">Banco De Preguntas</span>
-                            </Link>
-                        </li>
-                        {/* <li>
-                            <Link
-                                to="/dashboard/admin/reports"
-                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
-                            >
-                                <FiBarChart2 className="w-5 h-5" />
-                                <span className="ml-3">Reportes</span>
-                            </Link>
-                        </li> */}
-                    </ul>
-                ) :
-                    /* {ITEMS PARA USUARIO STUDENT} */
-                    (
-                        
-                        <ul>
+                    )}
+
+                    {/* OPCIONES ESTUDIANTE */}
+                    {isStudent && (
+                        <>
                             <li>
-                                <Link
+                                <NavLink
                                     to="/dashboard/student/newtest"
-                                    className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                    onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                    }
                                 >
-                                    <FiUsers className="w-5 h-5" />
-                                    <span className="ml-3">Realizar Pruebas</span>
-                                </Link>
+                                    <FiClipboard className="w-5 h-5" />
+                                    <span className="ml-3">Take New Test</span>
+                                </NavLink>
                             </li>
                             <li>
-                                <Link
+                                <NavLink
                                     to="/dashboard/student/materials"
-                                    className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
-                                    onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                                    className={({ isActive }) =>
+                                        `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
+                                    }
                                 >
-                                    <FiBarChart2 className="w-5 h-5" />
-                                    <span className="ml-3">Materiales De Estudio</span>
-                                </Link>
+                                    <FiBook className="w-5 h-5" />
+                                    <span className="ml-3">Study Materials</span>
+                                </NavLink>
                             </li>
-                        </ul>
-                    )
-                }
+                        </>
+                    )}
+                </ul>
+
+
             </nav>
 
             {/* Sección de Cerrar Sesión */}
@@ -215,7 +262,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                     className="flex items-center w-full p-3 rounded-lg hover:bg-gray-700 transition-colors text-red-400 hover:text-red-300"
                 >
                     <FiLogOut className="w-5 h-5" />
-                    <span className="ml-3">Cerrar Sesión</span>
+                    <span className="ml-3">Log Out</span>
                 </button>
             </div>
         </aside>

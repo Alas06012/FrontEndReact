@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
             <div className="flex justify-center items-center h-screen bg-gray-900 text-white">
                 <div className="text-center">
                     <div className="w-12 h-12 border-4 border-purple-500 border-dashed rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-lg text-purple-400">Verificando acceso...</p>
+                    <p className="text-lg text-purple-400">Authenticating...</p>
                 </div>
             </div>
         );
