@@ -71,6 +71,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
         }
     };
 
+    const navLinkClass = ({ isActive }) =>
+        `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`;
+
     const location = useLocation();
     const path = location.pathname;
 
@@ -118,7 +121,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
             <nav className="p-4">
 
                 <ul className="space-y-2">
-                    {/* ADMINISTRACIÓN (solo admin) */}
+                    {/* ADMIN SECTION */}
                     {isAdmin && (
                         <li className="group">
                             <details open={isAdminMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
@@ -139,23 +142,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 </summary>
                                 <ul className="pl-6 py-2 space-y-1">
                                     <li>
-                                        <NavLink
-                                            to="/dashboard/admin/users"
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                            }
-                                        >
+                                        <NavLink to="/dashboard/admin/users" className={navLinkClass}>
                                             <FiUsers className="w-4 h-4" />
                                             Users
                                         </NavLink>
                                     </li>
                                     <li>
-                                        <NavLink
-                                            to="/dashboard/admin/prompts"
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                            }
-                                        >
+                                        <NavLink to="/dashboard/admin/prompts" className={navLinkClass}>
                                             <FiEdit className="w-4 h-4" />
                                             Prompts
                                         </NavLink>
@@ -165,7 +158,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                         </li>
                     )}
 
-                    {/* BANCO DE PREGUNTAS (admin y teacher) */}
+                    {/* BANCO SECTION (ADMIN / TEACHER) */}
                     {(isAdmin || isTeacher) && (
                         <li className="group">
                             <details open={isBancoMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
@@ -185,72 +178,48 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                     </svg>
                                 </summary>
                                 <ul className="pl-6 py-2 space-y-1">
-                                    <li>
-                                        <NavLink
-                                            to="/dashboard/admin/study_materials"
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                            }
-                                        >
-                                            <FiFileText className="w-4 h-4" />
-                                            Study Materials
-                                        </NavLink>
-                                    </li>
-                                    <li>
-                                        <NavLink
-                                            to="/dashboard/admin/TitlesAdmin"
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                            }
-                                        >
-                                            <FiBox className="w-4 h-4" />
-                                            Question Titles
-                                        </NavLink>
-                                    </li>
-                                    <li>
-                                        <NavLink
-                                            to="/dashboard/admin/QuestionsAdmin"
-                                            className={({ isActive }) =>
-                                                `flex items-center gap-2 p-2 mr-2 rounded-lg transition-colors hover:bg-gray-600 ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                            }
-                                        >
-                                            <FiBox className="w-4 h-4" />
-                                            Questions - Answers
-                                        </NavLink>
-                                    </li>
+                                    {(isAdmin || isTeacher) && (
+                                        <li>
+                                            <NavLink to="/dashboard/admin/study_materials" className={navLinkClass}>
+                                                <FiFileText className="w-4 h-4" />
+                                                Study Materials
+                                            </NavLink>
+                                        </li>
+                                    )}
+                                    {isAdmin && (
+                                        <>
+                                            <li>
+                                                <NavLink to="/dashboard/admin/TitlesAdmin" className={navLinkClass}>
+                                                    <FiBox className="w-4 h-4" />
+                                                    Question Titles
+                                                </NavLink>
+                                            </li>
+                                            <li>
+                                                <NavLink to="/dashboard/admin/QuestionsAdmin" className={navLinkClass}>
+                                                    <FiBox className="w-4 h-4" />
+                                                    Questions - Answers
+                                                </NavLink>
+                                            </li>
+                                        </>
+                                    )}
                                 </ul>
                             </details>
                         </li>
                     )}
 
-                    {/* OPCIONES ESTUDIANTE */}
+                    {/* STUDENT SECTION */}
                     {isStudent && (
                         <>
                             <li>
-                                <NavLink
-                                    to="/dashboard/student/newtest"
-                                    className={({ isActive }) =>
-                                        `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                    }
-                                >
+                                <NavLink to="/dashboard/student/newtest" className={navLinkClass}>
                                     <FiClipboard className="w-5 h-5" />
                                     <span className="ml-3">Take New Test</span>
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink
-                                    to="/dashboard/student/materials"
-                                    className={({ isActive }) =>
-                                        `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${isActive ? 'bg-gray-800 text-cyan-400' : ''}`
-                                    }
-                                >
-                                    <FiBook className="w-5 h-5" />
-                                    <span className="ml-3">Study Materials</span>
                                 </NavLink>
                             </li>
                         </>
                     )}
                 </ul>
+
 
 
             </nav>

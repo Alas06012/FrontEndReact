@@ -39,7 +39,7 @@ const Users = () => {
         background: '#4b7af0',
         color: 'white',
       });
-      navigate('/dashboard/student');
+      navigate('/dashboard/' + userRole);
     }
   }, [userRole, navigate]);
 

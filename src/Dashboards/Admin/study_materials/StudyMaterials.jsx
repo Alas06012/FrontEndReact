@@ -59,17 +59,17 @@ const StudyMaterials = () => {
 
   const userRole = getUserRole()?.toLowerCase();
   useEffect(() => {
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'teacher') {
       fetchMaterials();
     } else {
       Alert({
         title: 'Access Denied',
-        text: 'You need admin privileges to access this page.',
+        text: 'You need more privileges to access this page.',
         icon: 'error',
         background: '#4b7af0',
         color: 'white',
       });
-      navigate('/dashboard/student');
+      navigate('/dashboard/'+ userRole);
     }
   }, [userRole, navigate]);
 
