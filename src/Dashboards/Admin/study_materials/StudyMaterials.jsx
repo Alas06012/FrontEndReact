@@ -22,10 +22,13 @@ const StudyMaterials = () => {
   const [showModal, setShowModal] = useState(false);
   const [editMaterial, setEditMaterial] = useState(null);
   const [viewMaterial, setViewMaterial] = useState(null);
+  const [fileEnabled, setFileEnabled] = useState(false); // Controla si el campo file está habilitado
+  const [selectedType, setSelectedType] = useState(''); // Almacena el tipo de archivo seleccionado
+  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
   const navigate = useNavigate();
   const filterFormRef = useRef();
 
-  const { handleSubmit } = useForm();
+  const { handleSubmit, watch, setValue } = useForm();
 
   // Mapeo de niveles CEFR a valores numéricos
   const levelMapping = {
@@ -59,6 +62,19 @@ const StudyMaterials = () => {
 
   const userRole = getUserRole()?.toLowerCase();
   useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      Alert({
+        title: 'Session Expired',
+        text: 'Please log in to continue.',
+        icon: 'error',
+        background: '#4b7af0',
+        color: 'white',
+      });
+      navigate('/login');
+      return;
+    }
+
     if (userRole === 'admin') {
       fetchMaterials();
     } else {
@@ -75,14 +91,40 @@ const StudyMaterials = () => {
 
   const fetchMaterials = async (filters = {}, page = 1, per_page = perPage) => {
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        Alert({
+          title: 'Session Expired',
+          text: 'Please log in to continue.',
+          icon: 'error',
+          background: '#4b7af0',
+          color: 'white',
+        });
+        navigate('/login');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/materials/filter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ ...filters, page, per_page }),
       });
+
+      if (response.status === 401) {
+        Alert({
+          title: 'Session Expired',
+          text: 'Your session has expired. Please log in again.',
+          icon: 'error',
+          background: '#4b7af0',
+          color: 'white',
+        });
+        localStorage.removeItem('access_token');
+        navigate('/login');
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -138,6 +180,21 @@ const StudyMaterials = () => {
 
   const onMaterialSubmit = async (data) => {
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        Alert({
+          title: 'Session Expired',
+          text: 'Please log in to continue.',
+          icon: 'error',
+          background: '#4b7af0',
+          color: 'white',
+        });
+        navigate('/login');
+        return;
+      }
+
+      setLoading(true); // Activar el estado de carga
+
       if (editMaterial) {
         // Modo edición: enviar datos como JSON
         const endpoint = '/materials/update';
@@ -155,10 +212,24 @@ const StudyMaterials = () => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
         });
+
+        if (response.status === 401) {
+          Alert({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please log in again.',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          localStorage.removeItem('access_token');
+          navigate('/login');
+          setLoading(false);
+          return;
+        }
 
         if (response.ok) {
           const data = await response.json();
@@ -205,6 +276,7 @@ const StudyMaterials = () => {
             background: '#4b7af0',
             color: 'white',
           });
+          setLoading(false);
           return;
         }
 
@@ -219,6 +291,7 @@ const StudyMaterials = () => {
             background: '#4b7af0',
             color: 'white',
           });
+          setLoading(false);
           return;
         }
 
@@ -227,10 +300,24 @@ const StudyMaterials = () => {
         const response = await fetch(`${API_URL}${endpoint}`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${token}`,
           },
           body: formData,
         });
+
+        if (response.status === 401) {
+          Alert({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please log in again.',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          localStorage.removeItem('access_token');
+          navigate('/login');
+          setLoading(false);
+          return;
+        }
 
         if (response.ok) {
           const data = await response.json();
@@ -264,6 +351,8 @@ const StudyMaterials = () => {
         background: '#4b7af0',
         color: 'white',
       });
+    } finally {
+      setLoading(false); // Desactivar el estado de carga
     }
   };
 
@@ -282,14 +371,41 @@ const StudyMaterials = () => {
 
     if (result.isConfirmed) {
       try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          Alert({
+            title: 'Session Expired',
+            text: 'Please log in to continue.',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          navigate('/login');
+          return;
+        }
+
         const response = await fetch(`${API_URL}/materials/delete`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ pk_studymaterial: materialId }),
         });
+
+        if (response.status === 401) {
+          Alert({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please log in again.',
+            icon: 'error',
+            background: '#4b7af0',
+            color: 'white',
+          });
+          localStorage.removeItem('access_token');
+          navigate('/login');
+          return;
+        }
+
         if (response.ok) {
           const data = await response.json();
           Alert({
@@ -326,6 +442,14 @@ const StudyMaterials = () => {
     setEditMaterial(material);
     setViewMaterial(null);
     setShowModal(true);
+    if (material) {
+      setSelectedType(material.studymaterial_type); // Establecer el tipo al editar
+    } else {
+      setSelectedType(''); // Reiniciar el tipo al crear
+      setFileEnabled(false); // Deshabilitar file al crear
+      setValue('type', ''); // Reiniciar el valor del campo type
+      setValue('file', null); // Reiniciar el valor del campo file
+    }
   };
 
   const openViewModal = (material) => {
@@ -400,6 +524,32 @@ const StudyMaterials = () => {
     },
   ];
 
+  // Observar el valor del campo 'type' para habilitar/deshabilitar el campo 'file'
+  const typeValue = watch('type');
+  useEffect(() => {
+    if (!editMaterial) {
+      // Solo en modo creación
+      setFileEnabled(!!typeValue && typeValue !== '');
+      setSelectedType(typeValue || '');
+    }
+  }, [typeValue, editMaterial]);
+
+  const getFileAccept = () => {
+    if (editMaterial || !selectedType) return '.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mov';
+    switch (selectedType) {
+      case 'PDF':
+        return '.pdf';
+      case 'Video':
+        return '.mp4,.mov';
+      case 'Document':
+        return '.doc,.docx';
+      case 'Presentation':
+        return '.ppt,.pptx';
+      default:
+        return '.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mov';
+    }
+  };
+
   const formFields = [
     {
       name: 'title',
@@ -427,21 +577,21 @@ const StudyMaterials = () => {
     },
     {
       name: 'file',
-      label: 'File',
-      type: 'file',
-      accept: '.pdf,.doc,.docx,.ppt,.pptx,.mp4,.mov',
+      label: editMaterial ? 'File Name' : 'File',
+      type: editMaterial ? 'text' : 'file', // Cambiar a text en modo edición
+      value: editMaterial ? editMaterial.studymaterial_url.split('/').pop() : '',
+      accept: getFileAccept(),
       validation: { 
         required: editMaterial ? false : 'File is required',
         validate: (files) => {
-          if (editMaterial) return true; // No validar en modo edición
-          if (!files || files.length === 0) return 'File is required';
+          if (editMaterial || !files || files.length === 0) return true;
           const file = files[0];
-          const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'mp4', 'mov'];
+          const allowedExtensions = getFileAccept().split(',').map(ext => ext.replace('.', ''));
           const fileExtension = file.name.split('.').pop().toLowerCase();
           return allowedExtensions.includes(fileExtension) || 'File type not allowed';
         },
       },
-      disabled: !!editMaterial, // Deshabilitar en modo edición
+      disabled: editMaterial || !fileEnabled, // Deshabilitar en modo edición o si no se seleccionó tipo
     },
     {
       name: 'level',
@@ -540,6 +690,7 @@ const StudyMaterials = () => {
             setShowModal(false);
             setEditMaterial(null);
             setViewMaterial(null);
+            setLoading(false);
           }}
           title={
             editMaterial
@@ -550,36 +701,67 @@ const StudyMaterials = () => {
           }
         >
           {editMaterial || !viewMaterial ? (
-            <Form
-              fields={formFields}
-              onSubmit={onMaterialSubmit}
-              initialData={
-                editMaterial
-                  ? {
-                      title: editMaterial.studymaterial_title,
-                      description: editMaterial.studymaterial_desc,
-                      type: editMaterial.studymaterial_type,
-                      level: editMaterial.level_fk,
-                      tags: editMaterial.studymaterial_tags,
-                    }
-                  : {
-                      title: '',
-                      description: '',
-                      type: '',
-                      file: null,
-                      level: '',
-                      tags: '',
-                    }
-              }
-              onCancel={() => {
-                setShowModal(false);
-                setEditMaterial(null);
-                setViewMaterial(null);
-              }}
-              submitText={editMaterial ? 'Update' : 'Create'}
-              layout="grid-cols-1"
-              encType={editMaterial ? 'application/json' : 'multipart/form-data'}
-            />
+            <div className="relative">
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-opacity-50 bg-gray-200">
+                  <div className="flex flex-col items-center">
+                    <svg
+                      className="animate-spin h-10 w-10 text-Paleta-Celeste"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"
+                      ></path>
+                    </svg>
+                    <span className="mt-2 text-gray-700">Uploading...</span>
+                  </div>
+                </div>
+              )}
+              <Form
+                fields={formFields}
+                onSubmit={onMaterialSubmit}
+                initialData={
+                  editMaterial
+                    ? {
+                        title: editMaterial.studymaterial_title,
+                        description: editMaterial.studymaterial_desc,
+                        type: editMaterial.studymaterial_type,
+                        level: editMaterial.level_fk,
+                        tags: editMaterial.studymaterial_tags,
+                      }
+                    : {
+                        title: '',
+                        description: '',
+                        type: '',
+                        file: null,
+                        level: '',
+                        tags: '',
+                      }
+                }
+                onCancel={() => {
+                  setShowModal(false);
+                  setEditMaterial(null);
+                  setViewMaterial(null);
+                  setLoading(false);
+                }}
+                submitText={editMaterial ? 'Update' : 'Create'}
+                layout="grid-cols-1"
+                encType={editMaterial ? 'application/json' : 'multipart/form-data'}
+                disabled={loading} // Deshabilitar el formulario mientras se carga
+              />
+            </div>
           ) : (
             <div className="p-4">
               <h3 className="text-lg font-semibold mb-2">Title: {viewMaterial.studymaterial_title}</h3>
@@ -589,7 +771,7 @@ const StudyMaterials = () => {
               <p className="mb-2">Tags: {viewMaterial.studymaterial_tags || 'N/A'}</p>
               {viewMaterial.studymaterial_url && (
                 <p className="mb-2">
-                  File: <a href={viewMaterial.studymaterial_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">{viewMaterial.studymaterial_url.split('/').pop()}</a>
+                  File: <span className="text-blue-500">{viewMaterial.studymaterial_url.split('/').pop()}</span>
                 </p>
               )}
               <div className="flex justify-end mt-4">

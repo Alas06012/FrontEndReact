@@ -9,6 +9,7 @@ import UsersAdmin from './Dashboards/Admin/UsersAdmin';
 import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
 //import StudyMaterials from './Dashboards/Students/StudyMaterials';
 import StudyMaterials from '../src/Dashboards/Admin/study_materials/StudyMaterials';
+import TestComments from '../src/Dashboards/Admin/test_comments/TestComments';
 import NewTest from './Dashboards/Students/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
 
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="users" element={<UsersAdmin />} />
               <Route path="prompts" element={<Prompts />} />
               <Route path="study_materials" element={<StudyMaterials />} />
+              <Route path="test_comments" element={<TestComments />} />
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
               <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />

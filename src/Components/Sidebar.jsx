@@ -114,7 +114,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                             >
                                 <FiUsers className="w-5 h-5" />
-                                <span className="ml-3">Administrar Usuarios</span>
+                                <span className="ml-3">Manage Users</span>
                             </Link>
                         </li>
                         <li>
@@ -124,7 +124,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                             >
                                 <FiFileText className="w-5 h-5" />
-                                <span className="ml-3">Administrar materiales de estudio</span>
+                                <span className="ml-3">Manage study materials</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/dashboard/admin/test_comments"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiFileText className="w-5 h-5" />
+                                <span className="ml-3">Test comments</span>
                             </Link>
                         </li>
                         <li>
@@ -134,7 +144,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                             >
                                 <FiFileText className="w-5 h-5" />
-                                <span className="ml-3">Administrar Prompts</span>
+                                <span className="ml-3">Manage Prompts</span>
                             </Link>
                         </li>
                         <li>
@@ -164,7 +174,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
                             >
                                 <FiBox className="w-5 h-5" />
-                                <span className="ml-3">Banco De Preguntas</span>
+                                <span className="ml-3">Question bank</span>
                             </Link>
                         </li>
                         {/* <li>
