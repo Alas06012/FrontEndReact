@@ -8,3 +8,6 @@ window.env = {
   VITE_API_PORT: "${VITE_API_PORT}"
 };
 EOF
+
+echo "Árbol de archivos del contenedor:"
+tree /

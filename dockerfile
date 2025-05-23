@@ -8,7 +8,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Instalar dependencias necesarias
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext tree
 
 # Configuración de Nginx
 COPY nginx.conf /etc/nginx/templates/default.conf.template
