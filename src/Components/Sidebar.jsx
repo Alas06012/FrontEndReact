@@ -120,41 +120,28 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
 
             <nav className="p-4">
 
-                <ul className="space-y-2">
-                    {/* ADMIN SECTION */}
-                    {isAdmin && (
-                        <li className="group">
-                            <details open={isAdminMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
-                                <summary className="flex items-center justify-between p-3 hover:bg-gray-600 cursor-pointer">
-                                    <div className="flex items-center">
-                                        <FiSettings className="w-5 h-5" />
-                                        <span className="ml-3">Administration</span>
-                                    </div>
-                                    <svg
-                                        className="w-4 h-4 ml-2 transition-transform duration-300 group-open:rotate-90"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </summary>
-                                <ul className="pl-6 py-2 space-y-1">
-                                    <li>
-                                        <NavLink to="/dashboard/admin/users" className={navLinkClass}>
-                                            <FiUsers className="w-4 h-4" />
-                                            Users
-                                        </NavLink>
-                                    </li>
-                                    <li>
-                                        <NavLink to="/dashboard/admin/prompts" className={navLinkClass}>
-                                            <FiEdit className="w-4 h-4" />
-                                            Prompts
-                                        </NavLink>
-                                    </li>
-                                </ul>
-                            </details>
+                {/* {ITEMS PARA USUARIO ADMIN} */}
+                {userRole?.toLowerCase() === 'admin' ? (
+                    <ul>
+                        <li>
+                            <Link
+                                to="/dashboard/admin/users"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiUsers className="w-5 h-5" />
+                                <span className="ml-3">Administrar Usuarios</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="/dashboard/admin/study_materials"
+                                className="flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                                onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+                            >
+                                <FiFileText className="w-5 h-5" />
+                                <span className="ml-3">Administrar materiales de estudio</span>
+                            </Link>
                         </li>
                         <li>
                             <Link
