@@ -9,7 +9,7 @@ const Navbar = ({ setSidebarOpen }) => {
       <button className="lg:hidden" onClick={() => setSidebarOpen(prev => !prev)}>
         <Menu className="w-6 h-6" />
       </button>
-      <h1 className="text-xl font-semibold">Bienvenido {getUserName()}!</h1>
+      <h1 className="text-xl font-semibold">Welcome {getUserName()}!</h1>
     </header>
   );
 };

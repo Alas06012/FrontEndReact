@@ -57,6 +57,12 @@ export default function App() {
               <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />
             </Route>
 
+            {/* Rutas para teacher */}
+            <Route path="teacher" >
+              <Route index element={<StudentDashboard />} />
+              <Route path="materials" element={<StudyMaterials />} />
+            </Route>
+
             {/* Rutas para student */}
             <Route path="student" >
               <Route index element={<StudentDashboard />} />

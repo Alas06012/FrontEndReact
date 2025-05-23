@@ -62,30 +62,17 @@ const StudyMaterials = () => {
 
   const userRole = getUserRole()?.toLowerCase();
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      Alert({
-        title: 'Session Expired',
-        text: 'Please log in to continue.',
-        icon: 'error',
-        background: '#4b7af0',
-        color: 'white',
-      });
-      navigate('/login');
-      return;
-    }
-
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'teacher') {
       fetchMaterials();
     } else {
       Alert({
         title: 'Access Denied',
-        text: 'You need admin privileges to access this page.',
+        text: 'You need more privileges to access this page.',
         icon: 'error',
         background: '#4b7af0',
         color: 'white',
       });
-      navigate('/dashboard/student');
+      navigate('/dashboard/'+ userRole);
     }
   }, [userRole, navigate]);
 

@@ -1,102 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '/config.js';
-import Alert from '../../../Components/Alert';
-import { getAccessToken } from '../../../Utils/auth';
-import QuestionForm from './QuestionForm';
-import QuestionTable from './QuestionTable';
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
-
-const Modal = ({ isOpen, onClose, children }) => {
-    if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-             <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-6">
-                <button
-                    className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-                    onClick={onClose}
-                >
-                    &times;
-                </button>
-                {children}
-            </div>
-        </div>
-    );
-};
-
-const ConfirmModal = ({ isOpen, onClose, onConfirm, question }) => {
-    if (!isOpen || !question) return null;
-    return (
-        <Modal isOpen={isOpen} onClose={onClose}>
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">
-                ¿Estás seguro de que deseas {question.status === 'ACTIVE' ? 'desactivar' : 'activar'} esta pregunta?
-            </h2>
-            <p className="mb-6 text-gray-600">{question.question_text}</p>
-            <div className="flex justify-end gap-4">
-                <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg">Cancelar</button>
-                <button onClick={() => onConfirm(question)} className="px-4 py-2 bg-red-600 text-white rounded-lg">Confirmar</button>
-            </div>
-        </Modal>
-    );
-};
+import { getAccessToken } from '../../../Utils/auth.js';
+import Alert from '../../../Components/Alert.jsx';
+import Table from '../../../Components/Table.jsx';
+import Pagination from '../../../Components/Pagination.jsx';
+import Modal from '../../../Components/Modal.jsx';
+import QuestionForm from './QuestionForm.jsx';
+import { Edit, XCircle, CheckCircle, Search, Plus } from 'lucide-react'; // Añadimos el icono Search
 
 const QuestionsAdmin = () => {
-    const [questions, setQuestions] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [showForm, setShowForm] = useState(false);
-    const [selectedQuestion, setSelectedQuestion] = useState(null);
-    const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [typingTimeout, setTypingTimeout] = useState(null);
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [questionToToggle, setQuestionToToggle] = useState(null);
+    const [search, setSearch] = useState('');
+    const [questions, setQuestions] = useState([]);
+    const [pagination, setPagination] = useState({ total_pages: 1, current_page: 1 });
+    const [perPage, setPerPage] = useState(10);
+    const [filters, setFilters] = useState({
+        searchText: '',
+        status: 'Todos',
+        title_id: '',
+        level_id: '',
+        toeic_section_id: '',
+    });
+    const [selectedQuestion, setSelectedQuestion] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [titles, setTitles] = useState([]);
+    const [levels, setLevels] = useState([]);
+    const [toeicSections, setToeicSections] = useState([]);
 
     const token = getAccessToken();
 
-    const showAlert = (text, icon = 'success') => {
-        Alert({ title: icon === 'error' ? 'Error' : 'Éxito', text, icon });
+    const showErrorAlert = (message) => {
+        Alert({
+            title: 'Error',
+            text: message,
+            icon: 'error',
+            background: '#1e293b',
+            color: 'white',
+        });
     };
 
-    const fetchQuestions = async () => {
-        setLoading(true);
+    const fetchQuestions = async (page = 1, per_page = perPage) => {
         try {
+            const body = {
+                page,
+                per_page,
+                status: filters.status !== 'ALL' ? filters.status : undefined,
+                title_id: filters.title_id || undefined,
+                level_id: filters.level_id || undefined,
+                toeic_section_id: filters.toeic_section_id || undefined,
+                search_text: filters.searchText || undefined,
+            };
+            Object.keys(body).forEach(key => body[key] === undefined && delete body[key]);
+
             const response = await fetch(`${API_URL}/questions-per-title`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    page,
-                    per_page: 10,
-                    status: 'ACTIVE',
-                }),
+                body: JSON.stringify(body),
             });
 
-            if (!response.ok) throw new Error('Error al cargar las preguntas');
             const data = await response.json();
-            console.log(data);
+            if (!response.ok) throw new Error(data.error || 'Error al obtener preguntas');
+
             setQuestions(data.questions || []);
-            setTotalPages(data.pagination?.total_pages || 1);
-            setError(null);
-        } catch (err) {
-            setError(err.message);
-            showAlert(err.message, 'error');
-        } finally {
-            setLoading(false);
+            setPagination({
+                total_pages: data.pagination?.total_pages || 1,
+                current_page: page,
+            });
+        } catch (error) {
+            showErrorAlert(error.message);
         }
     };
 
     useEffect(() => {
-        if (typingTimeout) clearTimeout(typingTimeout);
-        const timeout = setTimeout(() => {
-            fetchQuestions();
-        }, 500);
-        setTypingTimeout(timeout);
-    }, [search, page]);
+        const fetchCatalog = async (endpoint, setter, key) => {
+            try {
+                const res = await fetch(`${API_URL}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ page, search }),
+                });
 
-    const handleEdit = (question) => {
+                if (!res.ok) throw new Error(`Error al cargar ${endpoint}`);
+                const data = await res.json();
+                setter(data[key] || []);
+            } catch (err) {
+                console.error(`Error en ${endpoint}:`, err.message);
+            }
+        };
+
+        fetchCatalog('stories', setTitles, 'titles');
+        fetchCatalog('levels', setLevels, 'levels');
+        fetchCatalog('sections', setToeicSections, 'sections');
+    }, [token, page, search]);  // Añadir dependencias necesarias
+
+    useEffect(() => {
+        fetchQuestions(pagination.current_page, perPage);
+    }, [
+        pagination.current_page,
+        perPage,
+        filters.status,
+        filters.searchText,
+        filters.title_id,
+        filters.level_id,
+        filters.toeic_section_id,
+    ]);
+
+    const openForm = (question = null) => {
         setSelectedQuestion(question);
         setShowForm(true);
     };
@@ -108,13 +123,13 @@ const QuestionsAdmin = () => {
 
     const handleSubmit = async (formData) => {
         try {
-            console.log("aca",selectedQuestion);
             const method = selectedQuestion ? 'PUT' : 'POST';
             const endpoint = `${API_URL}/question`;
+
             const payload = selectedQuestion
                 ? { question_id: selectedQuestion.pk_question, ...formData }
                 : formData;
-                console.log(formData);
+
             const response = await fetch(endpoint, {
                 method,
                 headers: {
@@ -124,128 +139,229 @@ const QuestionsAdmin = () => {
                 body: JSON.stringify(payload),
             });
 
-            if (!response.ok) throw new Error('Error al guardar la pregunta');
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Error al guardar la pregunta');
 
-            await fetchQuestions();
-            
-            showAlert(selectedQuestion ? 'Pregunta actualizada' : 'Pregunta creada');
-            handleCancel();
-        } catch (err) {
-            showAlert(err.message, 'error');
-        }
-    };
-
-    const requestToggleStatus = (question) => {
-        setQuestionToToggle(question);
-        setShowConfirm(true);
-    };
-
-    const handleToggleStatus = async (question) => {
-        try {
-            const newStatus = question.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-            const response = await fetch(`${API_URL}/question/edit`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ question_id: question.pk_question, status: newStatus }),
+            Alert({
+                title: 'Éxito',
+                text: result.message || 'Pregunta guardada correctamente',
+                icon: 'success',
+                background: '#1e293b',
+                color: 'white',
             });
 
-            if (!response.ok) throw new Error('Error al actualizar estado');
-
-            await fetchQuestions();
-            showAlert(`Pregunta ${newStatus === 'ACTIVE' ? 'activada' : 'desactivada'}`);
-        } catch (err) {
-            showAlert(err.message, 'error');
-        } finally {
-            setShowConfirm(false);
-            setQuestionToToggle(null);
+            setShowForm(false);
+            setSelectedQuestion(null);
+            fetchQuestions(pagination.current_page, perPage);
+        } catch (error) {
+            showErrorAlert(error.message);
         }
     };
 
-    return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Gestión de Preguntas</h1>
+    const toggleStatus = async (question) => {
+        const isActive = question.status === 'ACTIVE';
+        const result = await Alert({
+            title: '¿Estás seguro?',
+            text: `¿Deseas ${isActive ? 'desactivar' : 'activar'} la pregunta: "${question.question_text}"?`,
+            icon: 'question',
+            type: 'confirm',
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar',
+            showCancelButton: true,
+            background: '#1e293b',
+            color: 'white',
+        });
 
-            <div className="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="relative w-full md:w-1/2">
-                    <input
-                        type="text"
-                        placeholder="Buscar preguntas..."
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setPage(1);
-                        }}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 focus:ring-2 focus:ring-blue-500"
-                    />
-                    <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
-                </div>
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`${API_URL}/question`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        question_id: question.pk_question,
+                        status: isActive ? 'INACTIVE' : 'ACTIVE',
+                    }),
+                });
 
-                <button
-                    onClick={() => {
-                        setSelectedQuestion(null);
-                        setShowForm(true);
-                    }}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 ease-in-out flex items-center gap-2"
-                >
-                    <PlusIcon className="w-5 h-5" /> Pregunta
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error al cambiar estado');
+
+                Alert({
+                    title: 'Éxito',
+                    text: data.message || 'Estado actualizado',
+                    icon: 'success',
+                    background: '#1e293b',
+                    color: 'white',
+                });
+
+                fetchQuestions(pagination.current_page, perPage);
+            } catch (error) {
+                showErrorAlert(error.message);
+            }
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setFilters((prev) => ({ ...prev, searchText: e.target.value }));
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleClearSearch = () => {
+        setFilters((prev) => ({ ...prev, searchText: '' }));
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleStatusChange = (e) => {
+        setFilters((prev) => ({ ...prev, status: e.target.value }));
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleFieldChange = (e, field) => {
+        setFilters((prev) => ({ ...prev, [field]: e.target.value }));
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    };
+
+    const handleClearAllFilters = () => {
+        setFilters({
+            searchText: '',
+            status: 'Todos',
+            title_id: '',
+            level_id: '',
+            toeic_section_id: '',
+        });
+        setPagination((prev) => ({ ...prev, current_page: 1 }));
+    };
+
+    const inputClass = 'p-2 border rounded-md';
+
+    const tableColumns = [
+        { header: 'ID', key: 'pk_question' },
+        { header: 'Texto', key: 'question_text' },
+        {
+            header: 'Estado',
+            render: (q) => (
+                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${q.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {q.status}
+                </span>
+            ),
+        },
+    ];
+
+    const actionRender = (question) => (
+        <div className="flex gap-2">
+            <button onClick={() => openForm(question)} className="text-blue-600 hover:text-blue-800" title="Editar">
+                <Edit className="h-5 w-5" />
+            </button>
+            {question.status === 'ACTIVE' ? (
+                <button onClick={() => toggleStatus(question)} className="text-red-500 hover:text-red-700" title="Desactivar">
+                    <XCircle className="h-5 w-5" />
                 </button>
-            </div>
-
-            {loading ? (
-                <p className="text-center text-gray-500">Cargando...</p>
-            ) : error ? (
-                <p className="text-center text-red-500">{error}</p>
-            ) : questions.length === 0 ? (
-                <p className="text-center text-gray-500">No hay preguntas disponibles.</p>
             ) : (
-                <>
-                    <QuestionTable
-                        questions={questions}
-                        onEdit={handleEdit}
-                        onToggleStatus={requestToggleStatus}
-                    />
+                <button onClick={() => toggleStatus(question)} className="text-green-500 hover:text-green-700" title="Activar">
+                    <CheckCircle className="h-5 w-5" />
+                </button>
+            )}
+        </div>
+    );
 
-                    <div className="flex justify-center items-center gap-4 mt-6">
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-Paleta-GrisClaro">
+            <div className="w-full max-w-6xl bg-Paleta-Blanco rounded-lg shadow-md p-6">
+                <h1 className="text-2xl font-bold text-center mb-6 text-black">Question Management</h1>
+
+                <div className="mb-6 space-y-6">
+                    <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
+                        <Search className="h-5 w-5" /> Filters
+                    </h2>
+
+                    {/* Search + clear */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <input
+                            type="text"
+                            placeholder="Search by text..."
+                            className={`${inputClass} w-full sm:w-1/2`}
+                            value={filters.searchText}
+                            onChange={handleSearchChange}
+                        />
                         <button
-                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={page === 1}
-                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-all duration-300"
+                            onClick={handleClearSearch}
+                            className="text-red-500 hover:text-red-700 flex items-center gap-1"
                         >
-                            Anterior
-                        </button>
-
-                        <span className="text-gray-600 font-semibold">
-                            Página {page} de {totalPages}
-                        </span>
-
-                        <button
-                            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                            disabled={page === totalPages}
-                            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-all duration-300"
-                        >
-                            Siguiente
+                            <XCircle className="h-5 w-5" /> Clear search
                         </button>
                     </div>
-                </>
-            )}
 
-            <Modal isOpen={showForm} onClose={handleCancel}>
-                <QuestionForm
-                    onSubmit={handleSubmit}
-                    initialData={selectedQuestion}
-                    onCancel={handleCancel}
+                    {/* Filters grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <select className={inputClass} value={filters.status} onChange={handleStatusChange}>
+                            <option value="ALL">All</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+
+                        <select className={inputClass} value={filters.title_id} onChange={(e) => handleFieldChange(e, 'title_id')}>
+                            <option value="">Select a Title</option>
+                            {titles.map((title) => (
+                                <option key={title.pk_title} value={title.pk_title}>{title.title_name}</option>
+                            ))}
+                        </select>
+
+                        <select className={inputClass} value={filters.level_id} onChange={(e) => handleFieldChange(e, 'level_id')}>
+                            <option value="">Select a Level</option>
+                            {levels.map((level) => (
+                                <option key={level.pk_level} value={level.pk_level}>{level.level_name}</option>
+                            ))}
+                        </select>
+
+                        <select className={inputClass} value={filters.toeic_section_id} onChange={(e) => handleFieldChange(e, 'toeic_section_id')}>
+                            <option value="">Select a Section</option>
+                            {toeicSections.map((section) => (
+                                <option key={section.section_pk} value={section.section_pk}>{section.section_desc}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-2">
+                        <button
+                            onClick={handleClearAllFilters}
+                            className="py-2 px-4 bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600 transition duration-300"
+                        >
+                            Clear all filters
+                        </button>
+
+                        <button
+                            onClick={() => openForm()}
+                            className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2"
+                        >
+                            <Plus className="h-5 w-5" /> New Question
+                        </button>
+                    </div>
+                </div>
+
+                <Modal isOpen={showForm} onClose={handleCancel} title={selectedQuestion ? 'Edit Question' : 'New Question'}>
+                    <QuestionForm onSubmit={handleSubmit} initialData={selectedQuestion} onCancel={handleCancel} />
+                </Modal>
+
+                <Table columns={tableColumns} data={questions} onAction={actionRender} />
+
+                <Pagination
+                    currentPage={pagination.current_page}
+                    totalPages={pagination.total_pages}
+                    onPageChange={(page) => setPagination((prev) => ({ ...prev, current_page: page }))}
+                    perPage={perPage}
+                    setPerPage={setPerPage}
+                    onPerPageChange={(e) => {
+                        const newValue = parseInt(e.target.value, 10);
+                        setPerPage(newValue);
+                        setPagination((prev) => ({ ...prev, current_page: 1 }));
+                        fetchQuestions(1, newValue);
+                    }}
                 />
-            </Modal>
-
-            <ConfirmModal
-                isOpen={showConfirm}
-                onClose={() => setShowConfirm(false)}
-                onConfirm={handleToggleStatus}
-                question={questionToToggle}
-            />
+            </div>
         </div>
     );
 };

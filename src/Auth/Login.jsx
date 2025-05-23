@@ -33,7 +33,7 @@ export default function Login() {
             } else {
                 Alert({
                     title: '',
-                    text: 'Email o Password Invalidos',
+                    text: 'Invalid Email or Password',
                     icon: 'error',
                     background: '#4b7af0',
                     color: 'white',
@@ -56,7 +56,7 @@ export default function Login() {
                 <div className="text-center mb-6">
                     <img src={LogoITCA} alt="Logo ITCA" />
                     <h2 className="mt-4 text-xl font-bold text-black">
-                        Ingresa tus credenciales
+                        Log in with your credentials
                     </h2>
                 </div>
 
@@ -71,13 +71,13 @@ export default function Login() {
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Ejemplo: user01@itca.edu.sv"
+                            placeholder="Example: user01@itca.edu.sv"
                             required
                         />
                     </div>
 
                     <div className="mb-6">
-                        <label htmlFor="password" className="block text-gray-700">Contraseña</label>
+                        <label htmlFor="password" className="block text-gray-700">Password</label>
                         <input
                             type="password"
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-Paleta-Celeste focus:border-Paleta-Celeste placeholder-gray-500"
@@ -91,10 +91,10 @@ export default function Login() {
 
                     <div className="text-center">
                         <button type="submit" className="w-full py-2 px-4 bg-Paleta-Celeste text-white font-semibold rounded-md hover:bg-Paleta-VerdeSuave transition duration-300 ease-in-out">
-                            Ingresar
+                            Sign In
                         </button>
                         <Link to='/register' className="block text-sm mt-4 text-gray-600 hover:text-Paleta-Celeste transition duration-300 ease-in-out">
-                            ¿No tienes una cuenta? Regístrate
+                            Don't have an account? Sign up
                         </Link>
                     </div>
                 </form>

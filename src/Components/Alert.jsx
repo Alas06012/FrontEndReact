@@ -9,7 +9,7 @@ const Alert = ({
   color = 'white',
   // Nuevas props (opcionales)
   type, // undefined = comportamiento original
-  confirmButtonText = 'Sí',
+  confirmButtonText = 'Yes',
   cancelButtonText = 'No',
   showCancelButton = true
 }) => {

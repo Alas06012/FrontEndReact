@@ -1,72 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Alert from '../../../Components/Alert.jsx';
 import { API_URL } from '/config.js';
-import Alert from '../../../Components/Alert';
 import { getAccessToken } from '../../../Utils/auth';
-import TitleForm from './TitleForm';
-import TitleTable from './TitleTable';
-import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
-
-const Modal = ({ isOpen, onClose, children }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-     <div className="relative bg-white rounded-lg shadow-lg w-full max-w-4xl p-6">
-        <button
-          className="absolute top-2 right-2 text-2xl text-gray-500 hover:text-black"
-          onClick={onClose}
-          aria-label="Cerrar modal"
-        >
-          &times;
-        </button>
-        {children}
-      </div>
-    </div>
-  );
-};
-
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title }) => {
-  if (!isOpen || !title) return null;
-  return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
-        ¿Estás seguro de que deseas {title.status === 'ACTIVE' ? 'desactivar' : 'activar'} este título?
-      </h2>
-      <p className="mb-6 text-gray-600">"{title.title_name}"</p>
-      <div className="flex justify-end gap-4">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800"
-        >
-          Cancelar
-        </button>
-        <button
-          onClick={() => onConfirm(title)}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white"
-        >
-          Confirmar
-        </button>
-      </div>
-    </Modal>
-  );
-};
+import Form from '../../../Components/Form.jsx';
+import Table from '../../../Components/Table.jsx';
+import Modal from '../../../Components/Modal.jsx';
+import Pagination from '../../../Components/Pagination.jsx';
+import { Plus, Edit, CheckCircle, Search, XCircle } from 'lucide-react';
 
 const TitlesAdmin = () => {
   const [titles, setTitles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [selectedTitle, setSelectedTitle] = useState(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [typingTimeout, setTypingTimeout] = useState(null);
+  const [pagination, setPagination] = useState({ current_page: 1, total_pages: 1 });
+  const [perPage, setPerPage] = useState(10);
+  const [showModal, setShowModal] = useState(false);
+  const [editTitle, setEditTitle] = useState(null);
 
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [titleToToggle, setTitleToToggle] = useState(null);
+  // 🟡 Corrección: filtros con valores por defecto para evitar undefineds
+  const [filters, setFilters] = useState({
+    title_name: '',
+    title_type: '',
+    status: ''
+  });
 
-  const token = getAccessToken();
+  const filterFormRef = useRef();
   const navigate = useNavigate();
+  const token = getAccessToken();
 
   const showAlert = (text, icon = 'success') => {
     Alert({
@@ -78,8 +37,12 @@ const TitlesAdmin = () => {
     });
   };
 
-  const fetchTitles = async () => {
-    setLoading(true);
+  // ✅ Corrección: un solo useEffect que escucha cambios en filtros, página y perPage
+  useEffect(() => {
+    fetchTitles(filters, pagination.current_page, perPage);
+  }, [filters, pagination.current_page, perPage]);
+
+  const fetchTitles = async (customFilters = {}, page = 1, per_page = perPage) => {
     try {
       const response = await fetch(`${API_URL}/stories`, {
         method: 'POST',
@@ -87,54 +50,30 @@ const TitlesAdmin = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          page,
-          per_page: 10,
-          search,
-        }),
+        body: JSON.stringify({ ...customFilters, page, per_page }),
       });
 
-      if (!response.ok) throw new Error('Error al cargar los títulos');
-
       const data = await response.json();
-      setTitles(data.titles || []);
-      setTotalPages(data.pagination?.total_pages || 1);
-      setError(null);
+      if (response.ok) {
+        setTitles(data.titles || []);
+        setPagination({
+          current_page: data.pagination?.current_page || 1,
+          total_pages: data.pagination?.total_pages || 1,
+        });
+      } else {
+        showAlert(data.error || 'Error al obtener títulos', 'error');
+      }
     } catch (err) {
-      setError(err.message);
-      showAlert(err.message, 'error');
-    } finally {
-      setLoading(false);
+      showAlert('Error de red', 'error');
     }
   };
 
-  useEffect(() => {
-    if (typingTimeout) clearTimeout(typingTimeout);
-    const timeout = setTimeout(() => {
-      fetchTitles();
-    }, 500);
-    setTypingTimeout(timeout);
-  }, [search, page]);
-
-  const handleEdit = (title) => {
-    setSelectedTitle(title);
-    setShowForm(true);
-  };
-
-  const handleCancel = () => {
-    setSelectedTitle(null);
-    setShowForm(false);
-  };
-
   const handleSubmit = async (formData) => {
+    const method = editTitle ? 'PUT' : 'POST';
+    const endpoint = `${API_URL}/story`;
+    const payload = editTitle ? { id: editTitle.pk_title, ...formData } : formData;
+
     try {
-      const method = selectedTitle ? 'PUT' : 'POST';
-      const endpoint = `${API_URL}/story`;
-
-      const payload = selectedTitle
-        ? { id: selectedTitle.pk_title, ...formData }
-        : formData;
-
       const response = await fetch(endpoint, {
         method,
         headers: {
@@ -144,25 +83,38 @@ const TitlesAdmin = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Error al guardar el título');
-
-      await fetchTitles();
-      showAlert(selectedTitle ? 'Título actualizado correctamente' : 'Título creado correctamente');
-      handleCancel();
+      const data = await response.json();
+      if (response.ok) {
+        showAlert(data.message || 'Operación exitosa');
+        setShowModal(false);
+        setEditTitle(null);
+        fetchTitles(filters, pagination.current_page, perPage);
+      } else {
+        showAlert(data.error || 'Error al guardar el título', 'error');
+      }
     } catch (err) {
-      showAlert(err.message, 'error');
+      showAlert('Error de red', 'error');
     }
   };
 
-  const requestToggleStatus = (title) => {
-    setTitleToToggle(title);
-    setShowConfirm(true);
-  };
+  const toggleStatus = async (title) => {
+    const newStatus = title.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
-  const handleToggleStatus = async (title) => {
+    const result = await Alert({
+      title: '¿Estás seguro?',
+      text: `¿Deseas ${newStatus === 'INACTIVE' ? 'desactivar' : 'activar'} la pregunta: "${title.title_name}"?`,
+      icon: 'warning',
+      type: 'confirm',
+      confirmButtonText: 'Sí',
+      cancelButtonText: 'Cancelar',
+      showCancelButton: true,
+      background: '#1e293b',
+      color: 'white',
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const newStatus = title.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
       const response = await fetch(`${API_URL}/story`, {
         method: 'PUT',
         headers: {
@@ -175,102 +127,199 @@ const TitlesAdmin = () => {
         }),
       });
 
-      if (!response.ok) throw new Error('Error al cambiar el estado del título');
-
-      await fetchTitles();
-      showAlert(`Título ${newStatus === 'ACTIVE' ? 'activado' : 'desactivado'} correctamente`);
+      const data = await response.json();
+      if (response.ok) {
+        showAlert(data.message || 'Estado actualizado');
+        fetchTitles(filters, pagination.current_page, perPage);
+      } else {
+        showAlert('Error al cambiar estado', 'error');
+      }
     } catch (err) {
-      showAlert(err.message, 'error');
-    } finally {
-      setShowConfirm(false);
-      setTitleToToggle(null);
+      showAlert('Error de red', 'error');
     }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">
-        Gestión de Títulos
-      </h1>
+  const clearFilters = () => {
+    const cleared = { title_name: '', title_type: '', status: '' };
+    setFilters(cleared);
+    filterFormRef.current?.reset();
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
 
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="relative w-full md:w-1/2">
-          <input
-            type="text"
-            placeholder="Buscar por título..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md pl-10 focus:ring-2 focus:ring-blue-500"
+  const handleFilterSubmit = (data) => {
+    setFilters(data);
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
+
+  const tableColumns = [
+    { header: 'ID', key: 'pk_title' },
+    { header: 'Nombre del título', key: 'title_name' },
+    {
+      header: 'Estado',
+      render: (item) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}
+        >
+          {item.status}
+        </span>
+      ),
+    },
+  ];
+
+  const actionRender = (title) => (
+    <div className="flex gap-2">
+      <button
+        onClick={() => {
+          setEditTitle(title);
+          setShowModal(true);
+        }}
+        className="text-blue-600 hover:text-blue-800"
+        title="Editar"
+      >
+        <Edit className="h-5 w-5" />
+      </button>
+      {title.status === 'ACTIVE' ? (
+        <button onClick={() => toggleStatus(title)} className="text-red-500 hover:text-red-700" title="Desactivar">
+          <XCircle className="h-5 w-5" />
+        </button>
+      ) : (
+        <button onClick={() => toggleStatus(title)} className="text-green-500 hover:text-green-700" title="Activar">
+          <CheckCircle className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  );
+
+  const formFields = [
+    {
+      name: 'title_name',
+      label: 'Title',
+      type: 'text',
+      validation: {
+        required: 'Title is required',
+        maxLength: { value: 100, message: 'Maximum 100 characters' },
+      },
+    },
+    {
+      name: 'title_test',
+      label: 'Description',
+      type: 'textarea',
+      validation: {
+        required: 'Description is required',
+        maxLength: { value: 400, message: 'Maximum 400 characters' },
+      },
+    },
+    {
+      name: 'title_type',
+      label: 'Title Type',
+      type: 'select',
+      options: [
+        { value: 'LISTENING', label: 'LISTENING' },
+        { value: 'READING', label: 'READING' },
+      ],
+      validation: {
+        required: 'Title type is required',
+      },
+    },
+    {
+      name: 'title_url',
+      label: 'Title URL',
+      type: 'text',
+      validation: {
+        maxLength: { value: 200, message: 'Maximum 200 characters' },
+      },
+    }
+  ];
+
+  const filterFields = [
+    { name: 'title_name', label: 'Title Name', type: 'text' },
+    {
+      name: 'title_type',
+      label: 'Title Type',
+      type: 'select',
+      options: [
+        { value: '', label: 'All' },
+        { value: 'LISTENING', label: 'LISTENING' },
+        { value: 'READING', label: 'READING' },
+      ],
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: '', label: 'All' },
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'INACTIVE', label: 'Inactive' },
+      ],
+    },
+  ];
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Gestión de Títulos</h1>
+
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-700">
+            <Search className="h-5 w-5" /> Filtros
+          </h2>
+          <Form
+            ref={filterFormRef}
+            fields={filterFields}
+            onSubmit={handleFilterSubmit}
+            submitText="Aplicar filtros"
+            onCancel={clearFilters}
+            cancelText="Limpiar"
+            layout="grid-cols-1 md:grid-cols-3"
           />
-          <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
         </div>
 
-        <button
-          onClick={() => {
-            setSelectedTitle(null);
-            setShowForm(true);
+        <div className="mb-6 text-center">
+          <button
+            onClick={() => { setEditTitle(null); setShowModal(true); }}
+            className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2 mx-auto"
+          >
+            <Plus className="h-5 w-5" /> Crear Título
+          </button>
+        </div>
+
+        <Table columns={tableColumns} data={titles} onAction={actionRender} />
+
+        <Pagination
+          currentPage={pagination.current_page}
+          totalPages={pagination.total_pages}
+          onPageChange={(newPage) => setPagination(prev => ({ ...prev, current_page: newPage }))}
+          perPage={perPage}
+          onPerPageChange={(e) => {
+            const newPerPage = parseInt(e.target.value, 10);
+            setPerPage(newPerPage);
+            setPagination(prev => ({ ...prev, current_page: 1 }));
           }}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 ease-in-out flex items-center gap-2"
-        >
-          <PlusIcon className="w-5 h-5" /> Título
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="text-center text-lg text-gray-600">Cargando...</div>
-      ) : error ? (
-        <div className="text-center text-red-500 text-lg">{error}</div>
-      ) : titles.length === 0 ? (
-        <div className="text-center text-gray-500 text-lg">No se encontraron títulos.</div>
-      ) : (
-        <>
-          <TitleTable
-            titles={titles}
-            onEdit={handleEdit}
-            onToggleStatus={requestToggleStatus}
-          />
-
-          <div className="flex justify-center items-center gap-4 mt-6">
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-all duration-300"
-            >
-              Anterior
-            </button>
-
-            <span className="text-gray-700 font-semibold">
-              Página {page} de {totalPages}
-            </span>
-
-            <button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-all duration-300"
-            >
-              Siguiente
-            </button>
-          </div>
-        </>
-      )}
-
-      <Modal isOpen={showForm} onClose={handleCancel}>
-        <TitleForm
-          onSubmit={handleSubmit}
-          initialData={selectedTitle}
-          onCancel={handleCancel}
         />
-      </Modal>
 
-      <ConfirmModal
-        isOpen={showConfirm}
-        onClose={() => setShowConfirm(false)}
-        onConfirm={handleToggleStatus}
-        title={titleToToggle}
-      />
+        <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditTitle(null); }} title={editTitle ? 'Editar Título' : 'Crear Título'}>
+          <Form
+            fields={formFields}
+            onSubmit={handleSubmit}
+            initialData={editTitle ? {
+              title_name: editTitle.title_name,
+              title_test: editTitle.title_test,
+              title_type: editTitle.title_type,
+              title_url: editTitle.title_url
+            } : {
+              title_name: '',
+              title_test: '',
+              title_type: 'READING',
+              title_url: '',
+            }}
+            onCancel={() => { setShowModal(false); setEditTitle(null); }}
+            submitText={editTitle ? 'Actualizar' : 'Crear'}
+            layout="grid-cols-1"
+          />
+        </Modal>
+      </div>
     </div>
   );
 };
