@@ -20,3 +20,4 @@ RUN chmod +x /docker-entrypoint.d/generate-config.sh && \
     rm -rf /etc/nginx/conf.d/default.conf
 
 # No establecer PORT aquí, Cloud Run lo inyectará
+EXPOSE 80

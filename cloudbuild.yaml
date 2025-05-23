@@ -21,7 +21,7 @@ steps:
       - '--vpc-egress=all-traffic'
       - '--cpu=1'
       - '--memory=1Gi'
-      - '--set-env-vars=VITE_API_HOST=${_VITE_API_HOST},VITE_API_LB_TYPE=${_VITE_API_LB_TYPE}'
+      - '--set-env-vars=VITE_API_HOST=${_VITE_API_HOST},VITE_API_LB_TYPE=${_VITE_API_LB_TYPE}, VITE_API_PORT=${_VITE_API_PORT}'
 
 options:
   logging: CLOUD_LOGGING_ONLY
