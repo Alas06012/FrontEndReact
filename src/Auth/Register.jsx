@@ -4,7 +4,7 @@ import Alert from '../Components/Alert'; // Importa el componente Alert
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import LogoITCA from '../assets/LogoITCA_Web.png';
-import { API_URL } from '/config.js';
+import { API_URL } from '../../config.js';
 
 
 export default function Register() {

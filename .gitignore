@@ -28,3 +28,20 @@ dist-ssr
 
 *.env.local
 *.env.*.local
+
+.dockerignore
+*.dockerignore
+.config.js
+*.config.js
+*index.html
+index.html
+src/Auth/ProtectedRoute.jsx
+src/Auth/Login.jsx
+src/Auth/Register.jsx
+
+src/Utils/fetchWithAuth.js
+generate-config.sh
+dockerfile
+.dockerfile
+nginx.conf
+

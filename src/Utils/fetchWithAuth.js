@@ -1,6 +1,6 @@
 // fetchWithAuth.js
 import { getAccessToken, getRefreshToken, setTokens, logout } from '../Utils/auth';
-import { API_URL } from '/config.js';
+import { API_URL } from '../../config.js';
 
 
 export const fetchWithAuth = async (url, options = {}) => {
