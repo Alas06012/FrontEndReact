@@ -10,4 +10,4 @@ window.env = {
 EOF
 
 echo "Árbol de archivos del contenedor:"
-tree /
+ls -la /usr/share/nginx/html/
