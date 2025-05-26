@@ -77,7 +77,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
     const location = useLocation();
     const path = location.pathname;
 
-    const isAdminMenuOpen = path.startsWith('/dashboard/admin/users') || path.startsWith('/dashboard/admin/prompts');
+    const isAdminMenuOpen = path.startsWith('/dashboard/admin/users') || path.startsWith('/dashboard/admin/prompts') || path.startsWith('/dashboard/student/newtest');
     const isBancoMenuOpen = path.includes('/dashboard/admin/study_materials') || path.includes('/dashboard/admin/questionsbank') || path.includes('/dashboard/admin/QuestionsAdmin') || path.includes('/dashboard/admin/TitlesAdmin');
 
     const isAdmin = userRole.toLowerCase() === 'admin';
@@ -122,7 +122,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
 
                 <ul className="space-y-2">
                     {/* ADMIN SECTION */}
-                    {isAdmin && (
+                    {(isAdmin || isTeacher) && (
                         <li className="group">
                             <details open={isAdminMenuOpen} className="group open:bg-gray-700 open:border-l-4 open:border-cyan-500 rounded-lg transition-all duration-300">
                                 <summary className="flex items-center justify-between p-3 hover:bg-gray-600 cursor-pointer">
@@ -141,18 +141,31 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                     </svg>
                                 </summary>
                                 <ul className="pl-6 py-2 space-y-1">
-                                    <li>
-                                        <NavLink to="/dashboard/admin/users" className={navLinkClass}>
-                                            <FiUsers className="w-4 h-4" />
-                                            Users
-                                        </NavLink>
-                                    </li>
-                                    <li>
-                                        <NavLink to="/dashboard/admin/prompts" className={navLinkClass}>
-                                            <FiEdit className="w-4 h-4" />
-                                            Prompts
-                                        </NavLink>
-                                    </li>
+
+                                    {(isAdmin) && (
+                                        <>
+                                            <li>
+                                                <NavLink to="/dashboard/admin/users" className={navLinkClass}>
+                                                    <FiUsers className="w-4 h-4" />
+                                                    Users
+                                                </NavLink>
+                                            </li><li>
+                                                <NavLink to="/dashboard/admin/prompts" className={navLinkClass}>
+                                                    <FiEdit className="w-4 h-4" />
+                                                    Prompts
+                                                </NavLink>
+                                            </li>
+                                        </>
+                                    )}
+
+                                    {(isAdmin) && (
+                                        <li>
+                                            <NavLink to="/dashboard/student/newtest" className={navLinkClass}>
+                                                <FiClipboard className="w-5 h-5" />
+                                                <span className="ml-3">Tests</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
                                 </ul>
                             </details>
                         </li>
