@@ -10,7 +10,7 @@ import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
 //import StudyMaterials from './Dashboards/Students/StudyMaterials';
 import StudyMaterials from '../src/Dashboards/Admin/study_materials/StudyMaterials';
 import TestComments from '../src/Dashboards/Admin/test_comments/TestComments';
-import NewTest from './Dashboards/Students/NewTest';
+import NewTest from './Dashboards/Students/Test/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
 
 import ProtectedRoute from './Auth/ProtectedRoute';
@@ -55,6 +55,7 @@ export default function App() {
               <Route path="questionsbank" element={<QuestionBank />} />
               <Route path="TitlesAdmin" element={<TitlesAdmin />} />
               <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />
+           
             </Route>
 
             {/* Rutas para teacher */}
