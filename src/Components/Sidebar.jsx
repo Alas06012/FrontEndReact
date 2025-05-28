@@ -158,7 +158,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                         </>
                                     )}
 
-                                    {(isAdmin) && (
+                                    {(isAdmin || isTeacher) && (
                                         <li>
                                             <NavLink to="/dashboard/student/newtest" className={navLinkClass}>
                                                 <FiClipboard className="w-5 h-5" />
