@@ -345,12 +345,12 @@ const StudyMaterials = () => {
 
   const deleteMaterial = async (materialId) => {
     const result = await Alert({
-      title: '¿Estás seguro?',
-      text: '¿Desea eliminar este material? Esta acción no se puede deshacer.',
+      title: 'Are you sure?',
+      text: 'Do you want to delete this material? This action cannot be undone.',
       icon: 'question',
       type: 'confirm',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
       showCancelButton: true,
       background: '#1e293b',
       color: 'white',
@@ -396,7 +396,7 @@ const StudyMaterials = () => {
         if (response.ok) {
           const data = await response.json();
           Alert({
-            title: 'Éxito',
+            title: 'Success',
             text: data.message,
             icon: 'success',
             background: '#1e293b',
@@ -407,7 +407,7 @@ const StudyMaterials = () => {
           const errorData = await response.json();
           Alert({
             title: 'Error',
-            text: errorData.error || 'No se pudo eliminar el material',
+            text: errorData.error || 'The material could not be deleted.',
             icon: 'error',
             background: '#1e293b',
             color: 'white',
@@ -416,7 +416,7 @@ const StudyMaterials = () => {
       } catch (error) {
         Alert({
           title: 'Error',
-          text: 'Ocurrió un error de red',
+          text: 'A network error occurred',
           icon: 'error',
           background: '#1e293b',
           color: 'white',
