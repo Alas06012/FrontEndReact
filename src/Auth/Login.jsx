@@ -56,7 +56,7 @@ export default function Login() {
                 <div className="text-center mb-6">
                     <img src={LogoITCA} alt="Logo ITCA" />
                     <h2 className="mt-4 text-xl font-bold text-black">
-                        Ingresa tus credenciales
+                        Ingresa tus datossss
                     </h2>
                 </div>
 
