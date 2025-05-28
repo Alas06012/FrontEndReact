@@ -179,12 +179,12 @@ const Users = () => {
 
   const deactivateUser = async (user) => {
     const result = await Alert({
-      title: '¿Estás seguro?',
-      text: `¿Desea desactivar a ${user.user_name} ${user.user_lastname}?`,
+      title: 'Are you sure?',
+      text: `Do you want to deactivate ${user.user_name} ${user.user_lastname}?`,
       icon: 'question',
       type: 'confirm',
-      confirmButtonText: 'Sí, desactivar',
-      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Yes, deactivate',
+      cancelButtonText: 'Cancel',
       showCancelButton: true,
       background: '#1e293b',
       color: 'white',
@@ -203,7 +203,7 @@ const Users = () => {
         if (response.ok) {
           const data = await response.json();
           Alert({
-            title: 'Éxito',
+            title: 'Success',
             text: data.message,
             icon: 'success',
             background: '#1e293b',
@@ -214,7 +214,7 @@ const Users = () => {
           const errorData = await response.json();
           Alert({
             title: 'Error',
-            text: errorData.error || 'No se pudo desactivar al usuario',
+            text: errorData.error || 'The user could not be deactivated.',
             icon: 'error',
             background: '#1e293b',
             color: 'white',
@@ -223,7 +223,7 @@ const Users = () => {
       } catch (error) {
         Alert({
           title: 'Error',
-          text: 'Ocurrió un error de red',
+          text: 'A network error occurred',
           icon: 'error',
           background: '#1e293b',
           color: 'white',
@@ -234,12 +234,12 @@ const Users = () => {
 
   const activateUser = async (user) => {
     const result = await Alert({
-      title: '¿Estás seguro?',
-      text: `¿Desea activar a ${user.user_name} ${user.user_lastname}?`,
+      title: 'Are you sure?',
+      text: `Do you want to activate ${user.user_name} ${user.user_lastname}?`,
       icon: 'question',
       type: 'confirm',
-      confirmButtonText: 'Sí, activar',
-      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Yes, activate',
+      cancelButtonText: 'Cancel',
       showCancelButton: true,
       background: '#1e293b',
       color: 'white',
@@ -269,7 +269,7 @@ const Users = () => {
           const errorData = await response.json();
           Alert({
             title: 'Error',
-            text: errorData.error || 'No se pudo activar al usuario',
+            text: errorData.error || 'The user could not be activated.',
             icon: 'error',
             background: '#1e293b',
             color: 'white',
@@ -278,7 +278,7 @@ const Users = () => {
       } catch (error) {
         Alert({
           title: 'Error',
-          text: 'Ocurrió un error de red',
+          text: 'A network error occurred',
           icon: 'error',
           background: '#1e293b',
           color: 'white',
@@ -322,19 +322,19 @@ const Users = () => {
 
   // Configuración de campos para el formulario de creación/edición
   const formFields = [
-    { name: 'name', label: 'Nombre', validation: { required: 'El nombre es requerido', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'El nombre solo puede contener letras y espacios' } } },
-    { name: 'lastname', label: 'Apellido', validation: { required: 'El apellido es requerido', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'El apellido solo puede contener letras y espacios' } } },
-    { name: 'carnet', label: 'Carnet', validation: { required: 'El carnet es requerido', pattern: { value: /^[0-9]{6}$/, message: 'El carnet debe contener exactamente 6 dígitos numéricos' } } },
-    { name: 'email', label: 'Correo', type: 'email', validation: { required: 'El correo es requerido' } },
-    { name: 'role', label: 'Rol', type: 'select', options: [{ value: 'student', label: 'Estudiante' }, { value: 'admin', label: 'Administrador' }], validation: { required: 'El rol es requerido' } },
-  ];
+    { name: 'name', label: 'Name', validation: { required: 'The name is required', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'The name can only contain letters and spaces' } } },
+    { name: 'lastname', label: 'Lastname', validation: { required: 'The lastname is required', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'The lastname can only contain letters and spaces' } } },
+    { name: 'carnet', label: 'Carnet', validation: { required: 'The carnet is required', pattern: { value: /^[0-9]{6}$/, message: 'The carnet must contain exactly 6 numeric digits' } } },
+    { name: 'email', label: 'Email', type: 'email', validation: { required: 'The email is required' } },
+    { name: 'role', label: 'Role', type: 'select', options: [{ value: 'student', label: 'Student' }, { value: 'admin', label: 'Administrator' }, , { value: 'teacher', label: 'Teacher' }], validation: { required: 'The role is required' } },
+];
 
   const filterFields = [
     { name: 'email', label: 'Email', type: 'text' },
     { name: 'name', label: 'Name', type: 'text' },
     { name: 'lastname', label: 'Lastname', type: 'text' },
     { name: 'carnet', label: 'Carnet', type: 'text' },
-    { name: 'role', label: 'Role', type: 'select', options: [{ value: '', label: 'All' }, { value: 'admin', label: 'Admin' }, { value: 'student', label: 'Student' }] },
+    { name: 'role', label: 'Role', type: 'select', options: [{ value: '', label: 'All' }, { value: 'admin', label: 'Admin' }, { value: 'student', label: 'Student' }, { value: 'teacher', label: 'Teacher' }] },
     { name: 'status', label: 'Status', type: 'select', options: [{ value: '', label: 'All' }, { value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }] },
   ];
 
@@ -372,7 +372,7 @@ const Users = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-Paleta-GrisClaro">
       <div className="w-full max-w-6xl bg-Paleta-Blanco rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-center mb-6 text-black">Administración de usuarios</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-black">User Management</h1>
 
         {/* Filtros */}
         <div className="mb-6">
@@ -387,7 +387,7 @@ const Users = () => {
             submitText="Apply Filters"
             layout="grid-cols-1 md:grid-cols-3"
             onCancel={clearFilters}
-            cancelText="Limpiar filtros"
+            cancelText="Clear Filters"
           />
         </div>
 
@@ -417,7 +417,7 @@ const Users = () => {
         {/* Modal para crear/editar usuario */}
         <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditUser(null); }} title={editUser ? 'Edit User' : 'Create User'}>
           <Form
-            fields={formFields.concat(!editUser ? [{ name: 'password', label: 'Contraseña', type: 'password', validation: { required: 'La contraseña es requerida', minLength: { value: 6, message: 'La contraseña debe tener al menos 6 caracteres' } } }] : [])}
+            fields={formFields.concat(!editUser ? [{ name: 'password', label: 'Password', type: 'password', validation: { required: 'The password is required', minLength: { value: 6, message: 'The password must be at least 6 characters' } } }] : [])}
             onSubmit={onUserSubmit}
             initialData={editUser ? {
               name: editUser.user_name,
@@ -434,7 +434,7 @@ const Users = () => {
               password: '',
             }}
             onCancel={() => { setShowModal(false); setEditUser(null); }}
-            submitText={editUser ? 'Actualizar' : 'Crear'}
+            submitText={editUser ? 'Update' : 'Create'}
             layout="grid-cols-1"
           />
         </Modal>
