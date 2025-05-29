@@ -31,8 +31,8 @@ export default function Login() {
                 body: JSON.stringify({ email, password }),
             });
 
+            const data = await response.json();
             if (response.ok) {
-                const data = await response.json();
                 setTokens(data.access_token, data.refresh_token);
                 setUserInfo(data.user);
                 const role = getUserRole().toLowerCase();
@@ -40,7 +40,7 @@ export default function Login() {
             } else {
                 Alert({
                     title: '',
-                    text: 'Invalid Email or Password',
+                    text: data.message,
                     icon: 'error',
                     background: '#4b7af0',
                     color: 'white',
@@ -83,7 +83,7 @@ export default function Login() {
                         />
                     </div>
 
-                    <div className="mb-6">
+                    <div className="mb-4">
                         <label htmlFor="password" className="block text-gray-700">Password</label>
                         <input
                             type="password"
@@ -94,6 +94,9 @@ export default function Login() {
                             placeholder="**********"
                             required
                         />
+                         <Link to='/forgot-password' className="block text-right underline text-sm mt-1 text-gray-600 hover:text-Paleta-Celeste transition duration-300 ease-in-out">
+                            Forgot password?
+                        </Link>
                     </div>
 
                     <div className="text-center">
@@ -103,6 +106,7 @@ export default function Login() {
                         <Link to='/register' className="block text-sm mt-4 text-gray-600 hover:text-Paleta-Celeste transition duration-300 ease-in-out">
                             Don't have an account? Sign up
                         </Link>
+
                     </div>
                 </form>
             </div>
