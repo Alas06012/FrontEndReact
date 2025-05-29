@@ -8,13 +8,19 @@ import Table from '../../../Components/Table.jsx';
 import Modal from '../../../Components/Modal.jsx';
 import Pagination from '../../../Components/Pagination.jsx';
 import TestFormModal from '../../../Components/TestFormModal.jsx';
+import TestResultModal from '../../../Components/Test/TestResultModal.jsx';
+import { Eye, MessageCircle, RotateCcw, BarChart2 } from 'lucide-react';
 
 const Tests = () => {
   const [tests, setTests] = useState([]);
   const [pagination, setPagination] = useState({ total_items: 0, total_pages: 1, current_page: 1 });
   const [perPage, setPerPage] = useState(20);
   const [loading, setLoading] = useState(false);
-
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [testStarted, setTestStarted] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultData, setResultData] = useState(null);
   const [filters, setFilters] = useState({
     user_email: '',
     user_name: '',
@@ -42,6 +48,24 @@ const Tests = () => {
       fetchTests();
     }
   }, [userRole, navigate]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && testStarted) {
+      Alert({
+        title: "Time's up!",
+        text: 'The test has been automatically submitted.',
+        icon: 'info',
+        background: '#1e293b',
+        color: 'white',
+      });
+      handleTestSubmit({ detalles: [] });
+    }
+
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [timeLeft, testStarted]);
 
   const handleFilterChange = (e) => {
     setFilters(prev => ({
@@ -121,7 +145,8 @@ const Tests = () => {
       fetchTests();
 
       if (res?.data?.detalles?.length > 0 && res.data.test_id) {
-        fetchTestData(res.data.test_id);
+        await fetchTestData(res.data.test_id);
+        setTestStarted(true);
       }
 
     } catch (err) {
@@ -177,12 +202,30 @@ const Tests = () => {
   };
 
   const handleTestSubmit = async (responses) => {
+    const unanswered = responses.detalles?.filter(d => !d.selected_option);
+    if (unanswered.length > 0) {
+      Alert({
+        title: 'Incomplete Test',
+        text: `You have ${unanswered.length} unanswered question(s). Please complete all questions before submitting.`,
+        icon: 'warning',
+        background: '#f97316',
+        color: 'white',
+      });
+      return;
+    }
+
+    const confirm1 = window.confirm('Are you sure you want to submit the test?');
+    if (!confirm1) return;
+
+    const confirm2 = window.confirm('This is your final confirmation. Do you really want to finish?');
+    if (!confirm2) return;
+
     try {
       const payload = {
         test_id: detailsData.test_id,
         detalles: responses.detalles,
       };
-      console.log("asdsafasfsaf",payload);
+
       const response = await fetch(`${API_URL}/finish-test`, {
         method: 'POST',
         headers: {
@@ -214,7 +257,8 @@ const Tests = () => {
       });
 
       fetchTests();
-      setShowDetailsModal(false);  // Cierra modal después de enviar
+      setShowDetailsModal(false);
+      setTestStarted(false);
 
     } catch (error) {
       Alert({
@@ -226,6 +270,138 @@ const Tests = () => {
       });
     }
   };
+
+  const handleViewResult = async (testId) => {
+    try {
+      const response = await fetch(`${API_URL}/test-analysis`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ test_id: testId }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+   
+        return Alert({
+          title: 'Error',
+          text: err.message || 'No se pudo cargar el resultado',
+          icon: 'error',
+          background: '#1e293b',
+          color: 'white',
+        });
+      }
+
+      const data = await response.json();
+           console.log(data)
+      setResultData(data);
+      setShowResultModal(true);
+
+    } catch (error) {
+      Alert({
+        title: 'Error',
+        text: 'Error de red al cargar resultados',
+        icon: 'error',
+        background: '#1e293b',
+        color: 'white',
+      });
+    }
+  };
+
+  const handleViewComments = async (testId) => {
+    try {
+      const response = await fetch(`${API_URL}/test-comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ test_id: testId }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        return Alert({
+          title: 'Error',
+          text: err.message || 'Failed to load comments',
+          icon: 'error',
+          background: '#1e293b',
+          color: 'white',
+        });
+      }
+
+      const data = await response.json();
+      Alert({
+        title: 'Comentarios del Test',
+        text: data.comments || 'No hay comentarios disponibles.',
+        icon: 'info',
+        background: '#1e293b',
+        color: 'white',
+      });
+    } catch (err) {
+      Alert({
+        title: 'Error',
+        text: 'Network error',
+        icon: 'error',
+        background: '#1e293b',
+        color: 'white',
+      });
+    }
+  };
+
+  const handleRetryTest = async (testId) => {
+    const confirmRetry = window.confirm('¿Deseas volver a intentar este test? Esto contará como un nuevo intento.');
+    if (!confirmRetry) return;
+
+    try {
+      const response = await fetch(`${API_URL}/retry-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({ test_id: testId }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        return Alert({
+          title: 'Error',
+          text: err.message || 'No se pudo reiniciar el test',
+          icon: 'error',
+          background: '#1e293b',
+          color: 'white',
+        });
+      }
+
+      const result = await response.json();
+      Alert({
+        title: 'Test reiniciado',
+        text: result.message || 'Has iniciado un nuevo intento del test.',
+        icon: 'success',
+        background: '#1e293b',
+        color: 'white',
+      });
+
+      // Si el backend te devuelve un nuevo test_id, puedes cargarlo inmediatamente
+      if (result?.data?.test_id) {
+        await fetchTestData(result.data.test_id);
+        setTestStarted(true);
+      }
+
+    } catch (error) {
+      Alert({
+        title: 'Error',
+        text: 'Network error',
+        icon: 'error',
+        background: '#1e293b',
+        color: 'white',
+      });
+    }
+  };
+
 
   const changePage = (page) => fetchTests(page, perPage);
 
@@ -243,7 +419,56 @@ const Tests = () => {
     { header: 'Level', key: 'level_name' },
     { header: 'Status', key: 'status' },
     { header: 'Passed', key: 'test_passed' },
+    {
+      header: 'Actions',
+      key: 'actions',
+      render: (row) => (
+        <div className="flex items-center gap-3">
+        <BarChart2
+          className={`w-5 h-5 ${
+            row.status === 'COMPLETED' 
+              ? 'text-purple-600 hover:text-purple-800 cursor-pointer' 
+              : 'text-gray-400 cursor-not-allowed'
+          }`}
+          title={row.status === 'COMPLETED' ? "Ver resultado del test" : "Resultado no disponible"}
+          onClick={() => {
+            if (row.status === 'COMPLETED') {
+              handleViewResult(row.pk_test);
+            }
+          }}
+        />
+
+          <MessageCircle
+            className="w-5 h-5 text-green-600 hover:text-green-800 cursor-pointer"
+            title="Ver comentarios"
+            onClick={() => handleViewComments(row.pk_test)}
+          />
+         <RotateCcw
+  className={`w-5 h-5 ${
+    row.status !== 'COMPLETED' 
+      ? 'text-red-600 hover:text-red-800 cursor-pointer' 
+      : 'text-gray-400 cursor-not-allowed'
+  }`}
+  title={row.status !== 'COMPLETED' ? "Reintentar test" : "No se puede reintentar test completado"}
+  onClick={() => {
+    if (row.status !== 'COMPLETED') {
+      handleRetryTest(row.pk_test);
+    }
+  }}
+/>
+        </div>
+      ),
+    },
   ];
+
+
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center p-6">
@@ -302,7 +527,7 @@ const Tests = () => {
           </button>
 
           <button
-            onClick={createTest}
+            onClick={() => setShowInstructions(true)}
             disabled={loading}
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-xl shadow transition"
           >
@@ -346,8 +571,85 @@ const Tests = () => {
           onClose={() => setShowDetailsModal(false)}
           testData={detailsData}
           onSubmit={handleTestSubmit}
+          initialTime={7200} // 1 hora
+          testStarted={true}
         />
       </div>
+
+      {showInstructions && (
+        <Modal isOpen={showInstructions} onClose={() => setShowInstructions(false)}>
+          <div className="p-6">
+            <h2 className="text-xl font-bold mb-4">TOEIC Test Instructions / Instrucciones TOEIC</h2>
+
+            <div className="w-full flex justify-end mb-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="lang-toggle"
+                  checked={filters.language === 'es'}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, language: e.target.checked ? 'es' : 'en' }))
+                  }
+                  className="w-5 h-5"
+                />
+                <label htmlFor="lang-toggle" className="select-none text-gray-700">
+                  {filters.language === 'es' ? 'Español' : 'English'}
+                </label>
+              </div>
+            </div>
+
+            {filters.language === 'es' ? (
+              <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                <li>El examen TOEIC Online Listening and Reading dura 2 horas (120 minutos): 50 preguntas de Listening y 50 de Reading.</li>
+                <li>Responde cuidadosamente las 100 preguntas de opción múltiple.</li>
+                <li>Es indispensable tener una conexión estable a internet durante todo el examen.</li>
+                <li>Usa un ambiente silencioso y sin distracciones para asegurar tu concentración.</li>
+                <li>Una vez enviado el examen, no podrás modificar tus respuestas.</li>
+                <li>No está permitido usar ayudas o dispositivos no autorizados durante el examen.</li>
+                <li>Es importante contestar todas las preguntas, de lo contrario no obtendrás un buen resultado.</li>
+                <li>Solo dispones de tres (3) intentos por día para realizar el examen.</li>
+                <li>Si cierras el examen antes de completarlo, se consumirá un intento y tus respuestas no serán enviadas ni evaluadas.</li>
+              </ul>
+            ) : (
+              <ul className="list-disc pl-5 text-gray-700 space-y-2">
+                <li>The TOEIC Online Listening and Reading test lasts 2 hours (120 minutes): 50 Listening questions and 50 Reading questions.</li>
+                <li>Carefully answer all 100 multiple-choice questions.</li>
+                <li>A stable internet connection throughout the test is essential.</li>
+                <li>Use a quiet environment free of distractions to ensure focus.</li>
+                <li>Once the test is submitted, you cannot change your answers.</li>
+                <li>No unauthorized aids or devices are allowed during the exam.</li>
+                <li>It is important to answer all questions; otherwise, you will not achieve a good result.</li>
+                <li>You are allowed only three (3) test attempts per day.</li>
+                <li>If you close the test without completing it, one attempt will be consumed and your answers will not be submitted or evaluated.</li>
+              </ul>
+            )}
+
+            <div className="mt-6 flex justify-end gap-4">
+              <button
+                onClick={() => setShowInstructions(false)}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-xl"
+              >
+                {filters.language === 'es' ? 'Cancelar' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowInstructions(false);
+                  createTest();
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl"
+              >
+                {filters.language === 'es' ? 'Continuar' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      <TestResultModal
+        isOpen={showResultModal}
+        onClose={() => setShowResultModal(false)}
+        resultData={resultData}
+      />
     </div>
   );
 };

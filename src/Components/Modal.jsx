@@ -6,6 +6,7 @@ const sizeMap = {
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
   '2xl': 'max-w-6xl',
+  '5xl': 'max-w-7xl', 
   full: 'max-w-full',
 };
 
