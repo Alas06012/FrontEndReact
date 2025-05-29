@@ -37,7 +37,7 @@ export default function Register() {
                 setMessage('User successfully registered');
                 Alert({
                     title: 'Registration Successful',
-                    text: 'User successfully registered',
+                    text: 'Registration successful. A verification code has been sent to your email.',
                     icon: 'success',
                     background: '#28a745',
                     color: 'white',
@@ -47,7 +47,7 @@ export default function Register() {
                 // Wait 3 seconds before redirecting
                 setTimeout(() => {
                     // Redirect to login
-                    navigate('/login')
+                    navigate('/verify-code')
                 }, 3000); // 3000 ms = 3 seconds
 
             } else {
@@ -165,6 +165,11 @@ export default function Register() {
                         </button>
                         <Link to='/login' className="block text-sm mt-4 text-gray-600 hover:text-Paleta-VerdeSuave transition duration-300 ease-in-out">
                             Already have an account? Sign In
+                        </Link>
+                    </div>
+                    <div className="text-center mt-6">
+                       <Link to='/verify-code' className="block text-sm mt-4 text-gray-600 hover:text-Paleta-VerdeSuave transition duration-300 ease-in-out">
+                            Already have a verification code? Verify Code
                         </Link>
                     </div>
                 </form>
