@@ -418,7 +418,11 @@ const Tests = () => {
     { header: 'Lastname', key: 'user_lastname' },
     { header: 'Level', key: 'level_name' },
     { header: 'Status', key: 'status' },
-    { header: 'Passed', key: 'test_passed' },
+    {
+      header: 'Passed',
+      key: 'test_passed',
+      render: (row) => (row.test_passed === 1 ? 'Aprobado' : 'Reprobado'),
+    },
     {
       header: 'Actions',
       key: 'actions',
