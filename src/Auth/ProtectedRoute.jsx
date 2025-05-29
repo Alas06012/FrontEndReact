@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { fetchWithAuth } from '../Utils/fetchWithAuth.js';
-import { getUserRole } from '../Utils/auth';
+import { getUserRole, logout } from '../Utils/auth';
 import { API_URL } from '/config.js';
-
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -17,13 +16,15 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
                 });
 
                 if (response.ok) {
+                    const data = await response.json();
                     setIsAuthenticated(true);
-                    setUserRole(getUserRole());
+                    setUserRole(data.role?.toLowerCase());
                 } else {
-                    setIsAuthenticated(false);
+                    throw new Error('Unauthorized');
                 }
             } catch (error) {
-                console.error('Error verificando token:', error);
+                console.error('Error verifying token:', error.message);
+                logout(); // Limpia tokens
                 setIsAuthenticated(false);
             }
         };
@@ -46,9 +47,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         return <Navigate to="/login" replace />;
     }
 
-    // Verificación de roles si se especifican
-    if (allowedRoles && !allowedRoles.includes(userRole?.toLowerCase())) {
-        return <Navigate to={`/dashboard/${userRole?.toLowerCase()}`} replace />;
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
+        // Usuario autenticado pero sin permiso para esta ruta
+        return <Navigate to={`/dashboard/${userRole}`} replace />;
     }
 
     return children;
