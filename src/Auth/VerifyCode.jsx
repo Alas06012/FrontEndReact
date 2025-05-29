@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Alert from '../Components/Alert';
 import { useNavigate } from 'react-router-dom';
 import LogoITCA from '../assets/LogoITCA_Web.png';
+import { getUserRole } from '../Utils/auth.js';
 import { API_URL } from '/config.js';
 
 const TIMER_DURATION = 180; // 3 minutes
@@ -14,6 +15,14 @@ export default function VerifyCode() {
     const [verifyTimer, setVerifyTimer] = useState(0);
 
     const navigate = useNavigate();
+
+    // Check if user is already logged in
+    useEffect(() => {
+        const role = getUserRole();
+        if (role) {
+            navigate(`/dashboard/${role.toLowerCase()}`);
+        }
+    }, []);
 
     // Start timer and store timestamp in localStorage
     const startTimer = (key, setTimer) => {

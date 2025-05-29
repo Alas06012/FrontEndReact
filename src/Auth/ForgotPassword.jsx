@@ -2,13 +2,16 @@ import { useState, useEffect } from 'react';
 import Alert from '../Components/Alert';
 import LogoITCA from '../assets/LogoITCA_Web.png';
 import { API_URL } from '/config.js';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { getUserRole } from '../Utils/auth.js';
 
 const TIMER_DURATION = 180; // 3 minutes
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [cooldown, setCooldown] = useState(0);
+    const navigate = useNavigate();
+
 
     // Start cooldown timer and store timestamp
     const startCooldown = () => {
@@ -126,11 +129,10 @@ export default function ForgotPassword() {
                     <button
                         type="submit"
                         disabled={cooldown > 0}
-                        className={`w-full py-2 px-4 font-semibold rounded-md transition duration-300 ${
-                            cooldown > 0
+                        className={`w-full py-2 px-4 font-semibold rounded-md transition duration-300 ${cooldown > 0
                                 ? 'bg-gray-400 text-white cursor-not-allowed'
                                 : 'bg-blue-500 text-white hover:bg-green-400'
-                        }`}
+                            }`}
                     >
                         {cooldown > 0 ? `Please wait (${cooldown}s)` : 'Send Reset Link'}
                     </button>
