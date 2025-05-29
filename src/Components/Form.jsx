@@ -45,7 +45,7 @@ const Form = ({ fields, onSubmit, initialData = {}, onCancel, submitText = 'Subm
             <textarea
               {...register(field.name, field.validation || {})}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-Paleta-Celeste focus:border-Paleta-Celeste placeholder-gray-500"
-              placeholder={`Ingrese ${field.label.toLowerCase()}`}
+              placeholder={`Enter ${field.label.toLowerCase()}`}
               rows="4"
             />
           ) : (
@@ -53,7 +53,7 @@ const Form = ({ fields, onSubmit, initialData = {}, onCancel, submitText = 'Subm
               type={field.type || 'text'}
               {...register(field.name, field.validation || {})}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-Paleta-Celeste focus:border-Paleta-Celeste placeholder-gray-500"
-              placeholder={`Ingrese ${field.label.toLowerCase()}`}
+              placeholder={`Enter ${field.label.toLowerCase()}`}
             />
           )}
           {errors[field.name] && <p className="text-red-500 text-sm mt-1">{errors[field.name].message}</p>}

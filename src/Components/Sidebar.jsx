@@ -192,28 +192,22 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 </summary>
                                 <ul className="pl-6 py-2 space-y-1">
                                     {(isAdmin || isTeacher) && (
-                                        <li>
+                                        <><li>
                                             <NavLink to="/dashboard/admin/study_materials" className={navLinkClass}>
                                                 <FiFileText className="w-4 h-4" />
                                                 Study Materials
                                             </NavLink>
-                                        </li>
-                                    )}
-                                    {isAdmin && (
-                                        <>
-                                            <li>
+                                        </li><li>
                                                 <NavLink to="/dashboard/admin/TitlesAdmin" className={navLinkClass}>
                                                     <FiBox className="w-4 h-4" />
                                                     Question Titles
                                                 </NavLink>
-                                            </li>
-                                            <li>
+                                            </li><li>
                                                 <NavLink to="/dashboard/admin/QuestionsAdmin" className={navLinkClass}>
                                                     <FiBox className="w-4 h-4" />
                                                     Questions - Answers
                                                 </NavLink>
-                                            </li>
-                                        </>
+                                            </li></>
                                     )}
                                 </ul>
                             </details>

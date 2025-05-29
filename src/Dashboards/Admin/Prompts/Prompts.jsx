@@ -170,12 +170,12 @@ const Prompts = () => {
   // Activar un prompt (desactiva los demás)
   const activatePrompt = async (prompt) => {
     const result = await Alert({
-      title: '¿Estás seguro?',
-      text: `¿Desea activar el prompt ${prompt.prompt_name}? Esto desactivará todos los demás prompts activos.`,
+      title: 'Are you sure?',
+      text: `Do you want to activate the prompt ${prompt.prompt_name}? This will deactivate all other active prompts.`,
       icon: 'question',
       type: 'confirm',
-      confirmButtonText: 'Sí, activar',
-      cancelButtonText: 'Cancelar',
+      confirmButtonText: 'Yes, activate',
+      cancelButtonText: 'Cancel',
       showCancelButton: true,
       background: '#1e293b',
       color: 'white',
@@ -194,7 +194,7 @@ const Prompts = () => {
         if (response.ok) {
           const data = await response.json();
           Alert({
-            title: 'Éxito',
+            title: 'Success',
             text: data.message,
             icon: 'success',
             background: '#1e293b',
@@ -205,7 +205,7 @@ const Prompts = () => {
           const errorData = await response.json();
           Alert({
             title: 'Error',
-            text: errorData.error || 'No se pudo activar el prompt',
+            text: errorData.error || 'The prompt could not be activated.',
             icon: 'error',
             background: '#1e293b',
             color: 'white',
@@ -214,7 +214,7 @@ const Prompts = () => {
       } catch (error) {
         Alert({
           title: 'Error',
-          text: 'Ocurrió un error de red',
+          text: 'A network error occurred.',
           icon: 'error',
           background: '#1e293b',
           color: 'white',
@@ -252,9 +252,9 @@ const Prompts = () => {
   // Configuración de columnas para la tabla
   const tableColumns = [
     { header: 'ID', key: 'pk_prompt' },
-    { header: 'Nombre', key: 'prompt_name' },
+    { header: 'Name', key: 'prompt_name' },
     {
-      header: 'Contenido',
+      header: 'Content',
       render: (item) => (
         <div className="flex items-center gap-2">
           <span>{item.prompt_value.length > 50 ? item.prompt_value.slice(0, 50) + '...' : item.prompt_value}</span>
@@ -262,7 +262,7 @@ const Prompts = () => {
             <button
               onClick={() => openViewModal(item)}
               className="text-Paleta-Celeste hover:text-Paleta-VerdeSuave"
-              title="Ver completo"
+              title="View full"
             >
               <Eye className="h-5 w-5" />
             </button>
@@ -288,26 +288,26 @@ const Prompts = () => {
   const formFields = [
     {
       name: 'name',
-      label: 'Nombre del Prompt',
+      label: 'Prompt Name',
       validation: {
-        required: 'El nombre es requerido',
-        maxLength: { value: 50, message: 'El nombre no puede exceder 50 caracteres' },
+        required: 'The name is required',
+        maxLength: { value: 50, message: 'The name cannot exceed 50 characters' },
       },
     },
     {
       name: 'value',
-      label: 'Contenido del Prompt',
+      label: 'Prompt Content',
       type: 'textarea',
       validation: {
-        required: 'El contenido es requerido',
+        required: 'The content is required',
       },
     },
   ];
 
   // Configuración de campos para el formulario de filtros
   const filterFields = [
-    { name: 'name', label: 'Nombre', type: 'text' },
-    { name: 'value', label: 'Contenido', type: 'text' },
+    { name: 'name', label: 'Name', type: 'text' },
+    { name: 'value', label: 'Content', type: 'text' },
     {
       name: 'status',
       label: 'Status',
@@ -357,7 +357,7 @@ const Prompts = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-Paleta-GrisClaro">
       <div className="w-full max-w-6xl bg-Paleta-Blanco rounded-lg shadow-md p-6">
-        <h1 className="text-2xl font-bold text-center mb-6 text-black">Administración de Prompts</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 text-black">Prompt Management</h1>
 
         {/* Filtros */}
         <div className="mb-6">
@@ -372,7 +372,7 @@ const Prompts = () => {
             submitText="Apply Filters"
             layout="grid-cols-1 md:grid-cols-3"
             onCancel={clearFilters}
-            cancelText="Limpiar filtros"
+            cancelText="Clear Filters"
           />
         </div>
 
@@ -410,7 +410,7 @@ const Prompts = () => {
             editPrompt
               ? 'Edit Prompt'
               : viewFullPrompt
-              ? 'Contenido Completo'
+              ? 'Full Content'
               : 'Create Prompt'
           }
         >
@@ -434,12 +434,12 @@ const Prompts = () => {
                 setEditPrompt(null);
                 setViewFullPrompt(null); // Limpiar viewFullPrompt al cancelar
               }}
-              submitText={editPrompt ? 'Actualizar' : 'Crear'}
+              submitText={editPrompt ? 'Update' : 'Create'}
               layout="grid-cols-1"
             />
           ) : (
             <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">Nombre: {viewFullPrompt.prompt_name}</h3>
+              <h3 className="text-lg font-semibold mb-2">Name: {viewFullPrompt.prompt_name}</h3>
               <div className="bg-gray-100 p-4 rounded-md border border-gray-300">
                 <p className="whitespace-pre-wrap break-words text-gray-800">{viewFullPrompt.prompt_value}</p>
               </div>
@@ -448,7 +448,7 @@ const Prompts = () => {
                   onClick={() => setShowModal(false)}
                   className="py-2 px-4 bg-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-400 transition duration-300 ease-in-out"
                 >
-                  Cerrar
+                  Close
                 </button>
               </div>
             </div>
