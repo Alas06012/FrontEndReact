@@ -62,12 +62,6 @@ const Users = () => {
           total_pages: data.pagination?.total_pages || 1,
           current_page: data.pagination?.current_page || 1,
         });
-        console.log('Pagination data:', {
-          total_items: data.pagination?.total_items,
-          total_pages: data.pagination?.total_pages,
-          current_page: data.pagination?.current_page,
-          per_page: per_page,
-        });
       } else {
         const errorData = await response.json();
         Alert({

@@ -259,19 +259,19 @@ const TitlesAdmin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-6xl bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Gestión de Títulos</h1>
+        <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Title Management</h1>
 
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-700">
-            <Search className="h-5 w-5" /> Filtros
+            <Search className="h-5 w-5" /> Filters
           </h2>
           <Form
             ref={filterFormRef}
             fields={filterFields}
             onSubmit={handleFilterSubmit}
-            submitText="Aplicar filtros"
+            submitText="Apply Filters"
             onCancel={clearFilters}
-            cancelText="Limpiar"
+            cancelText="Clear"
             layout="grid-cols-1 md:grid-cols-3"
           />
         </div>
@@ -281,7 +281,7 @@ const TitlesAdmin = () => {
             onClick={() => { setEditTitle(null); setShowModal(true); }}
             className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2 mx-auto"
           >
-            <Plus className="h-5 w-5" /> Crear Título
+            <Plus className="h-5 w-5" /> Create Title
           </button>
         </div>
 
@@ -299,7 +299,7 @@ const TitlesAdmin = () => {
           }}
         />
 
-        <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditTitle(null); }} title={editTitle ? 'Editar Título' : 'Crear Título'}>
+        <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditTitle(null); }} title={editTitle ? 'Edit Título' : 'Crear Título'}>
           <Form
             fields={formFields}
             onSubmit={handleSubmit}
