@@ -1,6 +1,7 @@
 // src/Components/TestFormModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Modal from '../Components/Modal.jsx';
+import Alert from '../Components/Alert.jsx';
 
 const Timer = ({ timeLeft, totalTime }) => {
     const percentage = (timeLeft / totalTime) * 100;
@@ -35,13 +36,26 @@ const Timer = ({ timeLeft, totalTime }) => {
 const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testStarted }) => {
     if (!isOpen || !testData || !testData.sections) return null;
 
-    const allTitlesWithSection = testData.sections.flatMap(section =>
-        section.titles.map(title => ({
-            ...title,
-            section_desc: section.section_desc,
-            section_type: section.section_type,
-        }))
-    );
+
+
+    const allTitlesWithSection = useMemo(() => {
+        if (!testData?.sections) return [];
+
+        let questionCounter = 1;
+
+        return testData.sections.flatMap(section =>
+            section.titles.map(title => ({
+                ...title,
+                section_desc: section.section_desc,
+                section_type: section.section_type,
+                questions: title.questions.map(q => ({
+                    ...q,
+                    globalIndex: questionCounter++,
+                }))
+            }))
+        );
+    }, [testData]);
+
 
     const totalPages = allTitlesWithSection.length;
     if (totalPages === 0) return null;
@@ -80,9 +94,13 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
     const handlePrev = () => {
         if (currentPage > 0) setCurrentPage(currentPage - 1);
     };
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const totalQuestions = allTitlesWithSection.reduce((acc, t) => acc + t.questions.length, 0);
+        const answeredCount = Object.keys(responses).length;
+
+        const isComplete = answeredCount === totalQuestions;
 
         const detalles = allTitlesWithSection.flatMap(title =>
             title.questions.map(question => ({
@@ -92,11 +110,28 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
             }))
         );
 
+        if (!isComplete) {
+            const result = await Alert({
+                title: 'Hay preguntas sin responder',
+                text: '¿Estás seguro que deseas enviar el test?',
+                icon: 'warning',
+                type: 'confirm',
+                confirmButtonText: 'Sí, enviar',
+                cancelButtonText: 'Cancelar',
+                background: '#1e293b',
+                color: 'white',
+            });;
+
+            if (!result.isConfirmed) return;
+        }
+
+        // Si está completo o el usuario confirmó:
         onSubmit({
             test_id: testData.test_id,
             detalles,
         });
     };
+
 
     /* return (
         <Modal
@@ -196,162 +231,168 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
         </Modal>
     ); */
 
-return (
-    <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        title={`Test: ${testData.test_id}`}
-        size="5xl"
-        height="95vh"
-    >
-        {/* Crear mapa de preguntas */}
-        {(() => {
-            let questionCounter = 1;
-            currentTitle.questions.forEach(q => {
-                if (!q.globalIndex) {
-                    q.globalIndex = questionCounter++;
-                }
-            });
-        })()}
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`Test: ${testData.test_id}`}
+            size="5xl"
+            height="95vh"
+        >
+            {/* Crear mapa de preguntas */}
+            {(() => {
+                const enhancedTitles = useMemo(() => {
+                    let counter = 1;
+                    return allTitlesWithSection.map(title => ({
+                        ...title,
+                        questions: title.questions.map(q => ({
+                            ...q,
+                            globalIndex: counter++,
+                        })),
+                    }));
+                }, [allTitlesWithSection]);
 
-        <div className="flex h-[80vh] gap-4 p-4 overflow-hidden">
-            {/* Columna izquierda: contenido del test */}
-            <div className="flex-1 overflow-y-auto pr-2 border-r">
-                <form onSubmit={handleSubmit} className="space-y-10">
-                    <div className="border-b border-gray-300 pb-2">
-                        <h3 className="text-xl text-gray-600 font-bold tracking-wide uppercase">
-                            {currentTitle.section_desc} ({currentTitle.section_type})
-                        </h3>
-                    </div>
 
-                    <div className="space-y-6">
-                        <h4 className="text-2xl font-semibold text-blue-700 leading-snug">
-                            {currentTitle.title_name}
-                        </h4>
+            })()}
 
-                        {currentTitle.title_url && (
-                            <audio controls src={currentTitle.title_url} className="w-full my-3 rounded shadow" />
-                        )}
+            <div className="flex h-[80vh] gap-4 p-4 overflow-hidden">
+                {/* Columna izquierda: contenido del test */}
+                <div className="flex-1 overflow-y-auto pr-2 border-r">
+                    <form onSubmit={handleSubmit} className="space-y-10">
+                        <div className="border-b border-gray-300 pb-2">
+                            <h3 className="text-xl text-gray-600 font-bold tracking-wide uppercase">
+                                {currentTitle.section_desc} ({currentTitle.section_type})
+                            </h3>
+                        </div>
 
-                        <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
-                            {currentTitle.title_test}
-                        </pre>
+                        <div className="space-y-6">
+                            <h4 className="text-2xl font-semibold text-blue-700 leading-snug">
+                                {currentTitle.title_name}
+                            </h4>
 
-                        {currentTitle.questions.map((question, qIndex) => {
-                            const globalQuestionNumber = allTitlesWithSection
-                                .slice(0, currentPage)
-                                .reduce((acc, title) => acc + title.questions.length, 0) + qIndex + 1;
+                            {currentTitle.title_url && (
+                                <audio controls src={currentTitle.title_url} className="w-full my-3 rounded shadow" />
+                            )}
 
-                            return (
-                                <div
-                                    key={question.question_id}
-                                    className="bg-white border border-gray-200 p-5 rounded-2xl shadow transition hover:shadow-md"
-                                >
-                                    <p className="text-sm text-gray-500 font-semibold mb-1">
-                                        Pregunta {globalQuestionNumber} de {
-                                            allTitlesWithSection.reduce((acc, t) => acc + t.questions.length, 0)
-                                        }
-                                    </p>
+                            <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
+                                {currentTitle.title_test}
+                            </pre>
 
-                                    <p className="font-semibold text-gray-800 text-lg mb-3">{question.question_text}</p>
+                            {currentTitle.questions.map((question, qIndex) => {
+                                const globalQuestionNumber = allTitlesWithSection
+                                    .slice(0, currentPage)
+                                    .reduce((acc, title) => acc + title.questions.length, 0) + qIndex + 1;
 
-                                    <div className="space-y-2">
-                                        {question.answers.map((answer) => (
-                                            <label
-                                                key={answer.answer_id}
-                                                className={`flex items-center px-4 py-2 rounded-xl border transition cursor-pointer
+                                return (
+                                    <div
+                                        key={question.question_id}
+                                        className="bg-white border border-gray-200 p-5 rounded-2xl shadow transition hover:shadow-md"
+                                    >
+                                        <p className="text-sm text-gray-500 font-semibold mb-1">
+                                            Pregunta {globalQuestionNumber} de {
+                                                allTitlesWithSection.reduce((acc, t) => acc + t.questions.length, 0)
+                                            }
+                                        </p>
+
+                                        <p className="font-semibold text-gray-800 text-lg mb-3">{question.question_text}</p>
+
+                                        <div className="space-y-2">
+                                            {question.answers.map((answer) => (
+                                                <label
+                                                    key={answer.answer_id}
+                                                    className={`flex items-center px-4 py-2 rounded-xl border transition cursor-pointer
                                                     ${responses[question.question_id] === answer.answer_id
-                                                        ? 'bg-blue-100 border-blue-500 text-blue-800 font-semibold'
-                                                        : 'bg-gray-50 hover:bg-gray-100 border-gray-300'
-                                                    }`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`question_${question.question_id}`}
-                                                    value={answer.answer_id}
-                                                    checked={responses[question.question_id] === answer.answer_id}
-                                                    onChange={() => handleAnswerChange(question.question_id, answer.answer_id)}
-                                                    className="mr-3 accent-blue-600"
-                                                />
-                                                {answer.answer_text}
-                                            </label>
-                                        ))}
+                                                            ? 'bg-blue-100 border-blue-500 text-blue-800 font-semibold'
+                                                            : 'bg-gray-50 hover:bg-gray-100 border-gray-300'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name={`question_${question.question_id}`}
+                                                        value={answer.answer_id}
+                                                        checked={responses[question.question_id] === answer.answer_id}
+                                                        onChange={() => handleAnswerChange(question.question_id, answer.answer_id)}
+                                                        className="mr-3 accent-blue-600"
+                                                    />
+                                                    {answer.answer_text}
+                                                </label>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
 
-                    <div className="flex justify-between items-center pt-8 border-t border-gray-300">
-                        <button
-                            type="button"
-                            onClick={handlePrev}
-                            disabled={currentPage === 0}
-                            className={`px-5 py-2.5 rounded-xl font-semibold transition
-                                ${currentPage === 0
-                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
-                        >
-                            Anterior
-                        </button>
-
-                        {currentPage === totalPages - 1 ? (
-                            <button
-                                type="submit"
-                                className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition"
-                            >
-                                Enviar respuestas
-                            </button>
-                        ) : (
+                        <div className="flex justify-between items-center pt-8 border-t border-gray-300">
                             <button
                                 type="button"
-                                onClick={handleNext}
-                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
+                                onClick={handlePrev}
+                                disabled={currentPage === 0}
+                                className={`px-5 py-2.5 rounded-xl font-semibold transition
+                                ${currentPage === 0
+                                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
                             >
-                                Siguiente
+                                Anterior
                             </button>
-                        )}
-                    </div>
-                </form>
-            </div>
 
-            {/* Columna derecha: timer + checklist */}
-            <div className="w-64 flex flex-col">
-                {testStarted && <Timer timeLeft={timeLeft} totalTime={initialTime} />}
-
-                <div className="text-sm text-gray-600 font-semibold mb-2">Progreso por pregunta</div>
-                <div className="grid grid-cols-5 gap-2 overflow-y-auto h-full pr-1">
-                    {allTitlesWithSection.flatMap((title, titleIndex) =>
-                        title.questions.map((question, qIndex) => {
-                            const questionNumber = allTitlesWithSection
-                                .slice(0, titleIndex)
-                                .reduce((acc, t) => acc + t.questions.length, 0) + qIndex + 1;
-
-                            const isAnswered = responses[question.question_id];
-                            const isCurrent = titleIndex === currentPage;
-
-                            return (
+                            {currentPage === totalPages - 1 ? (
                                 <button
-                                    key={question.question_id}
-                                    onClick={() => setCurrentPage(titleIndex)}
-                                    title={`Pregunta ${questionNumber}`}
-                                    className={`text-xs aspect-square rounded-lg font-bold transition
-                                        ${ isAnswered
+                                    type="submit"
+                                    className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition"
+                                >
+                                    Enviar respuestas
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleNext}
+                                    className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
+                                >
+                                    Siguiente
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+
+                {/* Columna derecha: timer + checklist */}
+                <div className="w-64 flex flex-col">
+                    {testStarted && <Timer timeLeft={timeLeft} totalTime={initialTime} />}
+
+                    <div className="text-sm text-gray-600 font-semibold mb-2">Progreso por pregunta</div>
+                    <div className="grid grid-cols-5 gap-2 overflow-y-auto h-full pr-1">
+                        {allTitlesWithSection.flatMap((title, titleIndex) =>
+                            title.questions.map((question, qIndex) => {
+                                const questionNumber = allTitlesWithSection
+                                    .slice(0, titleIndex)
+                                    .reduce((acc, t) => acc + t.questions.length, 0) + qIndex + 1;
+
+                                const isAnswered = responses[question.question_id];
+                                const isCurrent = titleIndex === currentPage;
+
+                                return (
+                                    <button
+                                        key={question.question_id}
+                                        onClick={() => setCurrentPage(titleIndex)}
+                                        title={`Pregunta ${questionNumber}`}
+                                        className={`text-xs aspect-square rounded-lg font-bold transition
+                                        ${isAnswered
                                                 ? 'bg-blue-600 text-white-700 hover:bg-blue-200'
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-300'
-                                        }`}
-                                >
-                                    {questionNumber}
-                                </button>
-                            );
-                        })
-                    )}
+                                            }`}
+                                    >
+                                        {questionNumber}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-    </Modal>
-);
+        </Modal>
+    );
 
 };
 

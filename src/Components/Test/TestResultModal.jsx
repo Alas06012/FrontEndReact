@@ -37,7 +37,7 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
               Estado:&nbsp;
               {test_passed ? (
                 <>
-                  <CheckCircleIcon className="w-6 h-6 text-green-600" /> 
+                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
                   <span className="ml-1 text-green-700">Aprobado</span>
                 </>
               ) : (
