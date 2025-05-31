@@ -37,6 +37,7 @@ const Tests = () => {
   const [detailsData, setDetailsData] = useState(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [isAddingComment, setIsAddingComment] = useState(false);
+  const [showEditCommentModal, setShowEditCommentModal] = useState(false);
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [selectedComment, setSelectedComment] = useState(null);
   const [comments, setComments] = useState([]);
@@ -423,6 +424,7 @@ const Tests = () => {
               : comment
           )
         );
+        setShowEditCommentModal(false);
         setSelectedComment(null); // Limpia el comentario seleccionado después de editar
       } else {
         const errorData = await response.json();
@@ -489,6 +491,11 @@ const Tests = () => {
     setIsAddingComment(true);
     setComments([]);
     setSelectedComment(null);
+  };
+
+  const handleEditCommentClick = (comment) => {
+    setSelectedComment(comment);
+    setShowEditCommentModal(true);
   };
 
   const handleRetryTest = async (testId) => {
@@ -635,7 +642,7 @@ const Tests = () => {
   };
 
   const commentFields = [
-    { name: "comment_title", label: "Title (Optional)", type: "text" },
+    { name: "comment_title", label: "Title", type: "text", validation: { required: "The title is required" } },
     { name: "comment_value", label: "Comment", type: "textarea", validation: { required: "Comment is required" } },
   ];
 
@@ -881,7 +888,7 @@ const Tests = () => {
           resultData={resultData}
         />
 
-        {/* Modal for Comments */}
+        {/* Modal for Adding Comments */}
         <Modal
           isOpen={showCommentModal}
           onClose={() => {
@@ -892,35 +899,68 @@ const Tests = () => {
           }}
           title={isAddingComment ? `Add Comment to Test #${selectedTestId}` : `View/Edit Comments for Test #${selectedTestId}`}
         >
-          {isAddingComment ? (
-            <Form
-              fields={commentFields}
-              onSubmit={handleAddComment}
-              onCancel={() => {
-                setShowCommentModal(false);
-                setIsAddingComment(false);
-                setSelectedTestId(null);
-              }}
-              submitText="Save Comment"
-              layout="grid-cols-1"
-            />
-          ) : comments.length > 0 ? (
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">Existing Comments</h3>
-              <ul className="list-disc pl-5 mb-4">
-                {comments.map((comment) => (
-                  <li key={comment.pk_comment} className="mb-2">
-                    <strong>{comment.comment_title || "No title"}</strong>: {comment.comment_value} (by {comment.author}, {new Date(comment.created_at).toLocaleString()})
-                    <button
-                      onClick={() => setSelectedComment(comment)}
-                      className="ml-2 text-blue-600 hover:text-blue-800"
+          <div className="max-h-[80vh] overflow-y-auto">
+            {isAddingComment ? (
+              <div className="p-2">
+                <Form
+                  fields={commentFields}
+                  onSubmit={handleAddComment}
+                  onCancel={() => {
+                    setShowCommentModal(false);
+                    setIsAddingComment(false);
+                    setSelectedTestId(null);
+                  }}
+                  submitText="Save Comment"
+                  layout="grid-cols-1"
+                />
+              </div>
+            ) : comments.length > 0 ? (
+              <div className="p-2">
+                <h3 className="text-lg font-semibold mb-2">Existing Comments</h3>
+                <div className="space-y-2">
+                  {comments.map((comment) => (
+                    <div
+                      key={comment.pk_comment}
+                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg"
                     >
-                      <Edit2 className="w-4 h-4 inline" /> Edit
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {selectedComment && (
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-semibold text-lg">{comment.comment_title}</h4>
+                          <p className="text-gray-600 mt-2">{comment.comment_value}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            by {comment.author}, {new Date(comment.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleEditCommentClick(comment)}
+                          className="text-blue-600 hover:text-blue-800 ml-4"
+                          title="Edit Comment"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="p-2 text-gray-600">No comments available.</p>
+            )}
+          </div>
+        </Modal>
+
+        {/* Modal for Editing Comments */}
+        <Modal
+          isOpen={showEditCommentModal}
+          onClose={() => {
+            setShowEditCommentModal(false);
+            setSelectedComment(null);
+          }}
+          title={`Edit Comment for Test #${selectedTestId}`}
+        >
+          <div className="max-h-[80vh] overflow-y-auto">
+            {selectedComment && (
+              <div className="p-2">
                 <Form
                   fields={commentFields}
                   initialData={{
@@ -928,15 +968,16 @@ const Tests = () => {
                     comment_value: selectedComment.comment_value,
                   }}
                   onSubmit={handleUpdateComment}
-                  onCancel={() => setSelectedComment(null)}
+                  onCancel={() => {
+                    setShowEditCommentModal(false);
+                    setSelectedComment(null);
+                  }}
                   submitText="Update Comment"
                   layout="grid-cols-1"
                 />
-              )}
-            </div>
-          ) : (
-            <p className="p-4 text-gray-600">No comments available.</p>
-          )}
+              </div>
+            )}
+          </div>
         </Modal>
       </div>
     </div>
