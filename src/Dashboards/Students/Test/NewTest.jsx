@@ -235,93 +235,91 @@ const Tests = () => {
     }
   };
 
-  const handleTestSubmit = async (responses) => {
-    const unanswered = responses.detalles?.filter(d => !d.selected_option);
-    let allowSubmit = true;
+ const handleTestSubmit = async (responses) => {
+  const unanswered = responses.detalles?.filter(d => !d.user_answer_id) || [];
+  const hasUnanswered = unanswered.length > 0;
 
-    if (unanswered.length > 0) {
-      const confirmIncomplete = await Alert({
-        title: 'Test incompleto',
-        /*  ${unanswered.length}  */
-        text: `Tienes pregunta(s) sin responder. ¿Deseas enviar el test de todas formas?`,
-        icon: 'warning',
-        type: 'confirm',
-        confirmButtonText: 'Sí, enviar',
-        cancelButtonText: 'Cancelar',
-        background: '#1e293b',
-        color: 'white',
-      });
+  // Primera confirmación si hay preguntas sin responder
+  const userConfirmation = await Alert({
+    title: hasUnanswered ? 'Incomplete Test' : 'Submit Test?',
+    text: hasUnanswered
+      ? `You have ${unanswered.length} unanswered question(s). Do you still want to submit the test?`
+      : 'Are you sure you want to submit the test now?',
+    icon: hasUnanswered ? 'warning' : 'question',
+    type: 'confirm',
+    confirmButtonText: 'Yes, continue',
+    cancelButtonText: 'Cancel',
+    background: '#1e293b',
+    color: 'white',
+  });
 
-      if (!confirmIncomplete?.isConfirmed) return; // el usuario canceló
-    } else {
-      const confirmSubmit = await Alert({
-        title: '¿Enviar test?',
-        text: '¿Estás seguro de que deseas enviar el test ahora?',
-        icon: 'question',
-        type: 'confirm',
-        confirmButtonText: 'Sí, enviar',
-        cancelButtonText: 'Cancelar',
-        background: '#1e293b',
-        color: 'white',
-      });
+  if (!userConfirmation?.isConfirmed) return;
 
-      if (!confirmSubmit?.isConfirmed) return;
-    }
-    setShowDetailsModal(false);
-    setTestStarted(false);
-    try {
-      const payload = {
-        test_id: detailsData.test_id,
-        detalles: responses.detalles,
-      };
+  // Confirmación final (también con Alert)
+  const finalConfirmation = await Alert({
+    title: 'Final Confirmation',
+    text: 'This is your last chance. Are you sure you want to submit the test?',
+    icon: 'question',
+    type: 'confirm',
+    confirmButtonText: 'Submit Test',
+    cancelButtonText: 'Cancel',
+    background: '#1e293b',
+    color: 'white',
+  });
 
-      const response = await fetch(`${API_URL}/finish-test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify(payload),
-      });
+  if (!finalConfirmation?.isConfirmed) return;
 
-      if (!response.ok) {
-        const err = await response.json();
-        await Alert({
-          title: 'Error',
-          text: err.message || 'Falló el envío del test',
-          icon: 'error',
-          background: '#1e293b',
-          color: 'white',
-        });
-        return;
-      }
+  setShowDetailsModal(false);
+  setTestStarted(false);
 
-      const result = await response.json();
+  try {
+    const payload = {
+      test_id: detailsData.test_id,
+      detalles: responses.detalles,
+    };
 
+    const response = await fetch(`${API_URL}/finish-test`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
       await Alert({
-        title: '¡Enviado!',
-        text: result.message || 'Test enviado correctamente',
-        icon: 'success',
-        background: '#1e293b',
-        color: 'white',
+        title: "Error",
+        text: err.message || "Failed to submit the test.",
+        icon: "error",
+        background: "#1e293b",
+        color: "white",
       });
-
-
-      fetchTests();
-
-
-
-    } catch (error) {
-      await Alert({
-        title: 'Error',
-        text: 'Error de red al enviar el test',
-        icon: 'error',
-        background: '#1e293b',
-        color: 'white',
-      });
+      return;
     }
-  };
 
+    const result = await response.json();
+
+    await Alert({
+      title: "Test Submitted!",
+      text: result.message || "The test was successfully submitted.",
+      icon: "success",
+      background: "#1e293b",
+      color: "white",
+    });
+
+    fetchTests();
+  } catch (error) {
+    await Alert({
+      title: 'Network Error',
+      text: 'There was a problem submitting the test. Please try again.',
+      icon: 'error',
+      background: "#1e293b",
+      color: "white",
+    });
+  }
+};
 
   const handleViewResult = async (testId) => {
     try {
@@ -338,7 +336,7 @@ const Tests = () => {
         const err = await response.json();
         return Alert({
           title: "Error",
-          text: err.message || "No se pudo cargar el resultado",
+          text: err.message || "Failed to load the result",
           icon: "error",
           background: "#1e293b",
           color: "white",
@@ -351,7 +349,7 @@ const Tests = () => {
     } catch (error) {
       Alert({
         title: "Error",
-        text: "Error de red al cargar resultados",
+        text: "Network error while loading results",
         icon: "error",
         background: "#1e293b",
         color: "white",
@@ -501,71 +499,53 @@ const Tests = () => {
       });
     }
   };
+  const handleAddCommentClick = (testId) => {
+    setSelectedTestId(testId);
+    setShowCommentModal(true);
+    setIsAddingComment(true);
+    setComments([]);
+    setSelectedComment(null);
+  };
 
-const handleRetryTest = async (testId) => {
-  // Usamos Alert tipo 'confirm' en lugar de window.confirm
-  const confirmRetry = await Alert({
-    title: '¿Deseas reiniciar el test?',
-    text: 'Esto contará como un nuevo intento.',
-    icon: 'warning',
-    type: 'confirm',
-    confirmButtonText: 'Sí, reiniciar',
-    cancelButtonText: 'Cancelar',
-    background: '#1e293b',
-    color: 'white',
-  });
+  const handleEditCommentClick = (comment) => {
+    setSelectedComment(comment);
+    setShowEditCommentModal(true);
+  };
 
-  if (!confirmRetry?.isConfirmed) return; // El usuario canceló
-
-  try {
-    const response = await fetch(`${API_URL}/retry-failed-test`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      },
-      body: JSON.stringify({ test_id: testId }),
+  const handleRetryTest = async (testId) => {
+    const confirmRetry = await Alert({
+      title: 'Restart Test?',
+      text: 'This will count as a new attempt and any previous answers may be cleared.',
+      icon: 'warning',
+      type: 'confirm',
+      confirmButtonText: 'Yes, restart',
+      cancelButtonText: 'Cancel',
+      background: '#1e293b',
+      color: 'white',
     });
 
-    if (!response.ok) {
-      const err = await response.json();
+    if (!confirmRetry?.isConfirmed) return;
+
+    try {
+      await fetchTestData(testId); // Loads the test again (retry logic handled in the backend)
+
+      await Alert({
+        title: 'Test Loaded',
+        text: 'You have started a new attempt. Good luck!',
+        icon: 'success',
+        background: '#1e293b',
+        color: 'white',
+      });
+    } catch (error) {
       await Alert({
         title: 'Error',
-        text: err.message || 'No se pudo reiniciar el test',
+        text: 'There was a problem restarting the test. Please try again.',
         icon: 'error',
         background: '#1e293b',
         color: 'white',
       });
-      return;
     }
-
-    const result = await response.json();
-    console.log(result)
-    await Alert({
-      title: 'Test reiniciado',
-      text: result.message || 'Has iniciado un nuevo intento del test.',
-      icon: 'success',
-      background: '#1e293b',
-      color: 'white',
-    });
-
-    // Si el backend te devuelve un nuevo test_id, puedes cargarlo inmediatamente
-    if (result?.data?.test_id) {
-      await fetchTestData(result.data.test_id);
-      setShowDetailsModal(true);
-    }
-
-  } catch (error) {
-    await Alert({
-      title: 'Error',
-      text: 'Network error',
-      icon: 'error',
-      background: '#1e293b',
-      color: 'white',
-    });
-  }
-};
-
+  };
 
   const changePage = (page) => fetchTests(page, perPage);
 
@@ -585,47 +565,66 @@ const handleRetryTest = async (testId) => {
     {
       header: "Passed",
       key: "test_passed",
-      render: (row) => (row.test_passed === 1 ? "Aprobado" : "Reprobado"),
+      render: (row) => {
+        if (row.test_passed === 1) return "Aprobado";
+        if (row.test_passed === 0) return "Reprobado";
+        return "Pendiente";
+      },
     },
     {
       header: "Actions",
       key: "actions",
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <BarChart2
-            className={`w-5 h-5 ${row.status === 'COMPLETED'
-              ? 'text-purple-600 hover:text-purple-800 cursor-pointer'
-              : 'text-gray-400 cursor-not-allowed'
-              }`}
-            title={row.status === 'COMPLETED' ? "Ver resultado del test" : "Resultado no disponible"}
-            onClick={() => {
-              if (row.status === 'COMPLETED') {
-                handleViewResult(row.pk_test);
-              }
-            }}
-          />
+      render: (row) => {
+        const isCompleted = row.status === "COMPLETED";
+        const canRetry = !isCompleted;
 
-          <MessageCircle
-            className="w-5 h-5 text-green-600 hover:text-green-800 cursor-pointer"
-            title="Ver comentarios"
-            onClick={() => handleViewComments(row.pk_test)}
-          />
-          <RotateCcw
-            className={`w-5 h-5 ${row.status !== 'COMPLETED'
-              ? 'text-red-600 hover:text-red-800 cursor-pointer'
-              : 'text-gray-400 cursor-not-allowed'
-              }`}
-            title={row.status !== 'COMPLETED' ? "Reintentar test" : "No se puede reintentar test completado"}
-            onClick={() => {
-              if (row.status !== 'COMPLETED') {
-                handleRetryTest(row.pk_test);
-              }
-            }}
-          />
-        </div>
-      ),
+        return (
+          <div className="flex items-center gap-3">
+            {/* Ver resultado */}
+            <BarChart2
+              className={`w-5 h-5 ${isCompleted ? "text-purple-600 hover:text-purple-800 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
+              title={isCompleted ? "Ver resultado del test" : "Resultado no disponible"}
+              onClick={() => isCompleted && handleViewResult(row.pk_test)}
+            />
+
+            {/* Ver comentario solo si existen */}
+            {row.hasComments && (
+              <button
+                onClick={() => handleViewOrUpdateComments(row.pk_test)}
+                className="text-green-600 hover:text-green-800 cursor-pointer"
+                title="Ver comentarios"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </button>
+            )}
+
+            {/* Agregar comentario siempre visible */}
+            <button
+              onClick={() => handleAddCommentClick(row.pk_test)}
+              className="text-green-600 hover:text-green-800 cursor-pointer"
+              title="Agregar comentario"
+            >
+              <MessageSquarePlus className="w-5 h-5" />
+            </button>
+
+            {/* Reintentar test */}
+            <button
+              onClick={() => {
+                if (canRetry) {
+                  handleRetryTest(row.pk_test);
+                }
+              }}
+              className={`${canRetry ? "text-red-600 hover:text-red-800 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
+              title={canRetry ? "Reintentar test" : "No se puede reintentar test completado"}
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+          </div>
+        );
+      },
     },
   ];
+
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
