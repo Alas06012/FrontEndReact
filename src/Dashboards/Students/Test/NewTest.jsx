@@ -613,7 +613,8 @@ const Tests = () => {
             <Eye className="w-5 h-5" />
           </button>
 
-          {!row.hasComments && (
+          {/* Quitamos el ícono de add comment */}
+          {/* {!row.hasComments && (
             <button
               onClick={() => handleAddCommentClick(row.pk_test)}
               className="text-green-600 hover:text-green-800 cursor-pointer"
@@ -621,7 +622,7 @@ const Tests = () => {
             >
               <MessageSquarePlus className="w-5 h-5" />
             </button>
-          )}
+          )} */}
 
           <button
             onClick={() => {
@@ -909,7 +910,7 @@ const Tests = () => {
           <div className="max-h-[80vh] overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
               {/* Exam Details Section */}
-              <div className="p-2 border-r border-gray-200">
+              <div className="p-2 border-r border-gray-200 overflow-y-auto" style={{ maxHeight: "70vh" }}>
                 <h3 className="text-lg font-semibold mb-2">Exam Details</h3>
                 {examDetails ? (
                   <div className="space-y-4">
@@ -928,19 +929,29 @@ const Tests = () => {
                                 <p className="font-semibold">
                                   {sectionIndex + 1}.{titleIndex + 1}.{questionIndex + 1} {question.question_text}
                                 </p>
+                                <p>
+                                  <strong>Student's Answer:</strong>{" "}
+                                  {question.student_answer
+                                    ? question.student_answer.text
+                                    : "Not answered"}
+                                </p>
+                                {/**
+                                 <p>
+                                  <strong>Correct Answer:</strong>{" "}
+                                  {question.correct_answer.text}
+                                </p>
+                                 */}
                                 <ul className="list-disc pl-5 mt-2">
                                   {question.options.map((option) => (
                                     <li
                                       key={option.option_id}
-                                      className={`${
-                                        question.student_answer?.option_id === option.option_id
-                                          ? "text-blue-600 font-medium"
-                                          : ""
-                                      } ${
-                                        question.correct_answer?.option_id === option.option_id
+                                      className={`${question.student_answer?.option_id === option.option_id
+                                        ? "text-blue-600 font-medium"
+                                        : ""
+                                        } ${question.correct_answer?.option_id === option.option_id
                                           ? "text-green-600 font-medium"
                                           : ""
-                                      }`}
+                                        }`}
                                     >
                                       {option.text}
                                       {question.student_answer?.option_id === option.option_id && (
@@ -965,7 +976,7 @@ const Tests = () => {
               </div>
 
               {/* Comments Section */}
-              <div className="p-2">
+              <div className="p-2 overflow-y-auto" style={{ maxHeight: "70vh" }}>
                 <h3 className="text-lg font-semibold mb-2">Comments</h3>
                 {isAddingComment ? (
                   <div>
