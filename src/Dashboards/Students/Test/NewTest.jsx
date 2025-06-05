@@ -613,17 +613,6 @@ const Tests = () => {
             <Eye className="w-5 h-5" />
           </button>
 
-          {/* Quitamos el ícono de add comment */}
-          {/* {!row.hasComments && (
-            <button
-              onClick={() => handleAddCommentClick(row.pk_test)}
-              className="text-green-600 hover:text-green-800 cursor-pointer"
-              title="Add Comment"
-            >
-              <MessageSquarePlus className="w-5 h-5" />
-            </button>
-          )} */}
-
           <button
             onClick={() => {
               if (row.status !== "COMPLETED") {
@@ -655,6 +644,16 @@ const Tests = () => {
     { name: "comment_title", label: "Title", type: "text", validation: { required: "The title is required" } },
     { name: "comment_value", label: "Comment", type: "textarea", validation: { required: "Comment is required" } },
   ];
+
+  // Función para dividir el texto de los speakers en líneas separadas
+  const formatConversation = (text) => {
+    if (!text) return [];
+    // Divide el texto en cada aparición de [SPEAKER_X]
+    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
+    return speakerLines.map((line, index) => (
+      <p key={index} className="mb-1">{line.trim()}</p>
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center p-6">
@@ -921,9 +920,10 @@ const Tests = () => {
                         </h4>
                         {section.titles.map((title, titleIndex) => (
                           <div key={title.title_id} className="mb-4">
-                            <h5 className="font-semibold text-md mb-2">
-                              {title.title_test}
-                            </h5>
+                            {/* Mostrar el texto de la conversación con saltos de línea */}
+                            <div className="font-semibold text-md mb-2">
+                              {formatConversation(title.title_test)}
+                            </div>
                             {title.questions.map((question, questionIndex) => (
                               <div key={question.question_id} className="bg-gray-50 p-4 rounded-lg shadow-sm mb-2">
                                 <p className="font-semibold">
