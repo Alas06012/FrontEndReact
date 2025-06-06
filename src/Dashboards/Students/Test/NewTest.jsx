@@ -399,10 +399,10 @@ const Tests = () => {
           color: "white",
         });
         //setShowExamModal(false);
-        fetchExamAndComments(selectedTestId);
         setIsAddingComment(false);
         setSelectedTestId(null);
         setSelectedComment(null);
+        fetchExamAndComments(selectedTestId);
         fetchTests();
       } else {
         const errorData = await response.json();
@@ -562,49 +562,33 @@ const Tests = () => {
   };
 
   const handleRetryTest = async (testId) => {
-    const confirmRetry = window.confirm(
-      "Do you want to retry this test? This will count as a new attempt."
-    );
-    if (!confirmRetry) return;
+    const confirmRetry = await Alert({
+      title: "Restart Test?",
+      text: "This will count as a new attempt and any previous answers may be cleared.",
+      icon: "warning",
+      type: "confirm",
+      confirmButtonText: "Yes, restart",
+      cancelButtonText: "Cancel",
+      background: "#1e293b",
+      color: "white",
+    });
+
+    if (!confirmRetry?.isConfirmed) return;
 
     try {
-      const response = await fetch(`${API_URL}/retry-test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({ test_id: testId }),
-      });
+      await fetchTestData(testId); // Loads the test again (retry logic handled in the backend)
 
-      if (!response.ok) {
-        const err = await response.json();
-        return Alert({
-          title: "Error",
-          text: err.message || "No se pudo reiniciar el test",
-          icon: "error",
-          background: "#1e293b",
-          color: "white",
-        });
-      }
-
-      const result = await response.json();
-      Alert({
-        title: "Test restarted",
-        text: result.message || "You have started a new test attempt.",
+      await Alert({
+        title: "Test Loaded",
+        text: "You have started a new attempt. Good luck!",
         icon: "success",
         background: "#1e293b",
         color: "white",
       });
-
-      if (result?.data?.test_id) {
-        await fetchTestData(result.data.test_id);
-        setTestStarted(true);
-      }
     } catch (error) {
-      Alert({
+      await Alert({
         title: "Error",
-        text: "Network error",
+        text: "There was a problem restarting the test. Please try again.",
         icon: "error",
         background: "#1e293b",
         color: "white",
@@ -672,15 +656,13 @@ const Tests = () => {
           </button>
 
           {/* Agregar comentario */}
-          {/**
-           * <button
+          <button
             onClick={() => handleAddCommentClick(row.pk_test)}
             className="text-green-600 hover:text-green-800 cursor-pointer"
             title="Add Comment"
           >
             <MessageSquarePlus className="w-5 h-5" />
           </button>
-           */}
 
           {/* Reintentar test */}
           <button
@@ -1029,14 +1011,12 @@ const Tests = () => {
                                   {sectionIndex + 1}.{titleIndex + 1}.
                                   {questionIndex + 1} {question.question_text}
                                 </p>
-                                {/**
-                                 * <p>
+                                <p>
                                   <strong>Student's Answer:</strong>{" "}
                                   {question.student_answer
                                     ? question.student_answer.text
                                     : "Not answered"}
                                 </p>
-                                 */}
                                 <ul className="list-disc pl-5 mt-2">
                                   {question.options.map((option) => (
                                     <li
