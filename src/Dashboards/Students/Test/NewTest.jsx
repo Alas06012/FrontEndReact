@@ -9,7 +9,14 @@ import Modal from "../../../Components/Modal.jsx";
 import Pagination from "../../../Components/Pagination.jsx";
 import TestFormModal from "../../../Components/TestFormModal.jsx";
 import TestResultModal from "../../../Components/Test/TestResultModal.jsx";
-import { Eye, MessageCircle, MessageSquarePlus, RotateCcw, BarChart2, Edit2 } from "lucide-react";
+import {
+  Eye,
+  MessageCircle,
+  MessageSquarePlus,
+  RotateCcw,
+  BarChart2,
+  Edit2,
+} from "lucide-react";
 import Form from "../../../Components/Form.jsx";
 
 const Tests = () => {
@@ -35,12 +42,13 @@ const Tests = () => {
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsData, setDetailsData] = useState(null);
-  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [showExamModal, setShowExamModal] = useState(false);
   const [isAddingComment, setIsAddingComment] = useState(false);
   const [showEditCommentModal, setShowEditCommentModal] = useState(false);
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [selectedComment, setSelectedComment] = useState(null);
   const [comments, setComments] = useState([]);
+  const [examDetails, setExamDetails] = useState(null);
 
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
@@ -105,18 +113,25 @@ const Tests = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const testsWithComments = await Promise.all(data.tests.map(async (test) => {
-          const commentResponse = await fetch(`${API_URL}/test-comments-per-id`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-            },
-            body: JSON.stringify({ test_id: test.pk_test }),
-          });
-          const commentData = await commentResponse.json();
-          return { ...test, hasComments: commentData.data.length > 0 };
-        }));
+        const testsWithComments = await Promise.all(
+          data.tests.map(async (test) => {
+            const commentResponse = await fetch(
+              `${API_URL}/test-comments-per-id`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem(
+                    "access_token"
+                  )}`,
+                },
+                body: JSON.stringify({ test_id: test.pk_test }),
+              }
+            );
+            const commentData = await commentResponse.json();
+            return { ...test, hasComments: commentData.data.length > 0 };
+          })
+        );
         setTests(testsWithComments);
         setPagination(data.pagination);
       } else {
@@ -235,91 +250,93 @@ const Tests = () => {
     }
   };
 
- const handleTestSubmit = async (responses) => {
-  const unanswered = responses.detalles?.filter(d => !d.user_answer_id) || [];
-  const hasUnanswered = unanswered.length > 0;
+  const handleTestSubmit = async (responses) => {
+    const unanswered =
+      responses.detalles?.filter((d) => !d.user_answer_id) || [];
+    const hasUnanswered = unanswered.length > 0;
 
-  // Primera confirmación si hay preguntas sin responder
-  const userConfirmation = await Alert({
-    title: hasUnanswered ? 'Incomplete Test' : 'Submit Test?',
-    text: hasUnanswered
-      ? `You have ${unanswered.length} unanswered question(s). Do you still want to submit the test?`
-      : 'Are you sure you want to submit the test now?',
-    icon: hasUnanswered ? 'warning' : 'question',
-    type: 'confirm',
-    confirmButtonText: 'Yes, continue',
-    cancelButtonText: 'Cancel',
-    background: '#1e293b',
-    color: 'white',
-  });
-
-  if (!userConfirmation?.isConfirmed) return;
-
-  // Confirmación final (también con Alert)
-  const finalConfirmation = await Alert({
-    title: 'Final Confirmation',
-    text: 'This is your last chance. Are you sure you want to submit the test?',
-    icon: 'question',
-    type: 'confirm',
-    confirmButtonText: 'Submit Test',
-    cancelButtonText: 'Cancel',
-    background: '#1e293b',
-    color: 'white',
-  });
-
-  if (!finalConfirmation?.isConfirmed) return;
-
-  setShowDetailsModal(false);
-  setTestStarted(false);
-
-  try {
-    const payload = {
-      test_id: detailsData.test_id,
-      detalles: responses.detalles,
-    };
-
-    const response = await fetch(`${API_URL}/finish-test`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-      },
-      body: JSON.stringify(payload),
+    // Primera confirmación si hay preguntas sin responder
+    const userConfirmation = await Alert({
+      title: hasUnanswered ? "Incomplete Test" : "Submit Test?",
+      text: hasUnanswered
+        ? `You have ${unanswered.length} unanswered question(s). Do you still want to submit the test?`
+        : "Are you sure you want to submit the test now?",
+      icon: hasUnanswered ? "warning" : "question",
+      type: "confirm",
+      confirmButtonText: "Yes, continue",
+      cancelButtonText: "Cancel",
+      background: "#1e293b",
+      color: "white",
     });
 
-    if (!response.ok) {
-      const err = await response.json();
-      await Alert({
+    if (!userConfirmation?.isConfirmed) return;
+
+    // Confirmación final
+    const finalConfirmation = await Alert({
+      title: "Final Confirmation",
+      text: "This is your last chance. Are you sure you want to submit the test?",
+      icon: "question",
+      type: "confirm",
+      confirmButtonText: "Submit Test",
+      cancelButtonText: "Cancel",
+      background: "#1e293b",
+      color: "white",
+    });
+
+    if (!finalConfirmation?.isConfirmed) return;
+
+    setShowDetailsModal(false);
+    setTestStarted(false);
+
+    try {
+      const payload = {
+        test_id: detailsData.test_id,
+        detalles: responses.detalles,
+      };
+
+      const response = await fetch(`${API_URL}/finish-test`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        Alert({
+          title: "Error",
+          text: err.message || "Failed to submit test",
+          icon: "error",
+          background: "#1e293b",
+          color: "white",
+        });
+        return;
+      }
+
+      const result = await response.json();
+      Alert({
+        title: "Success",
+        text: result.message || "Test submitted successfully!",
+        icon: "success",
+        background: "#1e293b",
+        color: "white",
+      });
+
+      fetchTests();
+      setShowDetailsModal(false);
+      setTestStarted(false);
+    } catch (error) {
+      Alert({
         title: "Error",
-        text: err.message || "Failed to submit the test.",
+        text: "Submission failed",
         icon: "error",
         background: "#1e293b",
         color: "white",
       });
-      return;
     }
-
-    const result = await response.json();
-
-    await Alert({
-      title: "Test Submitted!",
-      text: result.message || "The test was successfully submitted.",
-      icon: "success",
-      background: "#1e293b",
-      color: "white",
-    });
-
-    fetchTests();
-  } catch (error) {
-    await Alert({
-      title: 'Network Error',
-      text: 'There was a problem submitting the test. Please try again.',
-      icon: 'error',
-      background: "#1e293b",
-      color: "white",
-    });
-  }
-};
+  };
 
   const handleViewResult = async (testId) => {
     try {
@@ -336,7 +353,7 @@ const Tests = () => {
         const err = await response.json();
         return Alert({
           title: "Error",
-          text: err.message || "Failed to load the result",
+          text: err.message || "No se pudo cargar el resultado",
           icon: "error",
           background: "#1e293b",
           color: "white",
@@ -349,7 +366,7 @@ const Tests = () => {
     } catch (error) {
       Alert({
         title: "Error",
-        text: "Network error while loading results",
+        text: "Error de red al cargar resultados",
         icon: "error",
         background: "#1e293b",
         color: "white",
@@ -381,7 +398,8 @@ const Tests = () => {
           background: "#1e293b",
           color: "white",
         });
-        setShowCommentModal(false);
+        //setShowExamModal(false);
+        fetchExamAndComments(selectedTestId);
         setIsAddingComment(false);
         setSelectedTestId(null);
         setSelectedComment(null);
@@ -435,7 +453,11 @@ const Tests = () => {
         setComments((prevComments) =>
           prevComments.map((comment) =>
             comment.pk_comment === selectedComment.pk_comment
-              ? { ...comment, comment_title: data.comment_title, comment_value: data.comment_value }
+              ? {
+                  ...comment,
+                  comment_title: data.comment_title,
+                  comment_value: data.comment_value,
+                }
               : comment
           )
         );
@@ -462,9 +484,91 @@ const Tests = () => {
     }
   };
 
-  const handleViewOrUpdateComments = async (testId) => {
+  const fetchExamAndComments = async (testId) => {
     try {
-      const response = await fetch(`${API_URL}/test-comments-per-id`, {
+      // Fetch exam details with student answers
+      const examResponse = await fetch(`${API_URL}/test-details-with-answers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify({ test_id: testId }),
+      });
+
+      if (!examResponse.ok) {
+        const err = await examResponse.json();
+        Alert({
+          title: "Error",
+          text: err.message || "Failed to load exam details",
+          icon: "error",
+          background: "#1e293b",
+          color: "white",
+        });
+        return;
+      }
+
+      const examData = await examResponse.json();
+      setExamDetails(examData.data);
+
+      // Fetch comments
+      const commentResponse = await fetch(`${API_URL}/test-comments-per-id`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+        body: JSON.stringify({ test_id: testId }),
+      });
+
+      if (!commentResponse.ok) {
+        const err = await commentResponse.json();
+        Alert({
+          title: "Error",
+          text: err.message || "Failed to load comments",
+          icon: "error",
+          background: "#1e293b",
+          color: "white",
+        });
+        return;
+      }
+
+      const commentData = await commentResponse.json();
+      setComments(commentData.data);
+      setSelectedTestId(testId);
+      setShowExamModal(true);
+      setIsAddingComment(false);
+    } catch (err) {
+      Alert({
+        title: "Error",
+        text: "Network error",
+        icon: "error",
+        background: "#1e293b",
+        color: "white",
+      });
+    }
+  };
+
+  const handleAddCommentClick = (testId) => {
+    setSelectedTestId(testId);
+    setShowExamModal(true);
+    setIsAddingComment(true);
+    fetchExamAndComments(testId);
+  };
+
+  const handleEditCommentClick = (comment) => {
+    setSelectedComment(comment);
+    setShowEditCommentModal(true);
+  };
+
+  const handleRetryTest = async (testId) => {
+    const confirmRetry = window.confirm(
+      "Do you want to retry this test? This will count as a new attempt."
+    );
+    if (!confirmRetry) return;
+
+    try {
+      const response = await fetch(`${API_URL}/retry-test`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -477,72 +581,33 @@ const Tests = () => {
         const err = await response.json();
         return Alert({
           title: "Error",
-          text: err.message || "Failed to load comments",
+          text: err.message || "No se pudo reiniciar el test",
           icon: "error",
           background: "#1e293b",
           color: "white",
         });
       }
 
-      const data = await response.json();
-      setComments(data.data);
-      setSelectedTestId(testId);
-      setShowCommentModal(true);
-      setIsAddingComment(false);
-    } catch (err) {
+      const result = await response.json();
+      Alert({
+        title: "Test restarted",
+        text: result.message || "You have started a new test attempt.",
+        icon: "success",
+        background: "#1e293b",
+        color: "white",
+      });
+
+      if (result?.data?.test_id) {
+        await fetchTestData(result.data.test_id);
+        setTestStarted(true);
+      }
+    } catch (error) {
       Alert({
         title: "Error",
         text: "Network error",
         icon: "error",
         background: "#1e293b",
         color: "white",
-      });
-    }
-  };
-  const handleAddCommentClick = (testId) => {
-    setSelectedTestId(testId);
-    setShowCommentModal(true);
-    setIsAddingComment(true);
-    setComments([]);
-    setSelectedComment(null);
-  };
-
-  const handleEditCommentClick = (comment) => {
-    setSelectedComment(comment);
-    setShowEditCommentModal(true);
-  };
-
-  const handleRetryTest = async (testId) => {
-    const confirmRetry = await Alert({
-      title: 'Restart Test?',
-      text: 'This will count as a new attempt and any previous answers may be cleared.',
-      icon: 'warning',
-      type: 'confirm',
-      confirmButtonText: 'Yes, restart',
-      cancelButtonText: 'Cancel',
-      background: '#1e293b',
-      color: 'white',
-    });
-
-    if (!confirmRetry?.isConfirmed) return;
-
-    try {
-      await fetchTestData(testId); // Loads the test again (retry logic handled in the backend)
-
-      await Alert({
-        title: 'Test Loaded',
-        text: 'You have started a new attempt. Good luck!',
-        icon: 'success',
-        background: '#1e293b',
-        color: 'white',
-      });
-    } catch (error) {
-      await Alert({
-        title: 'Error',
-        text: 'There was a problem restarting the test. Please try again.',
-        icon: 'error',
-        background: '#1e293b',
-        color: 'white',
       });
     }
   };
@@ -574,57 +639,73 @@ const Tests = () => {
     {
       header: "Actions",
       key: "actions",
-      render: (row) => {
-        const isCompleted = row.status === "COMPLETED";
-        const canRetry = !isCompleted;
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          {/* Ver resultado */}
+          <button
+            onClick={() => {
+              if (row.status === "COMPLETED") {
+                handleViewResult(row.pk_test);
+              }
+            }}
+            className={`text-purple-600 hover:text-purple-800 ${
+              row.status === "COMPLETED"
+                ? "cursor-pointer"
+                : "text-gray-400 cursor-not-allowed"
+            }`}
+            title={
+              row.status === "COMPLETED"
+                ? "View test result"
+                : "Result not available"
+            }
+          >
+            <BarChart2 className="w-5 h-5" />
+          </button>
 
-        return (
-          <div className="flex items-center gap-3">
-            {/* Ver resultado */}
-            <BarChart2
-              className={`w-5 h-5 ${isCompleted ? "text-purple-600 hover:text-purple-800 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
-              title={isCompleted ? "Ver resultado del test" : "Resultado no disponible"}
-              onClick={() => isCompleted && handleViewResult(row.pk_test)}
-            />
+          {/* Ver examen y comentarios */}
+          <button
+            onClick={() => fetchExamAndComments(row.pk_test)}
+            className="text-blue-600 hover:text-blue-800 cursor-pointer"
+            title="View Exam and Comments"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
 
-            {/* Ver comentario solo si existen */}
-            {row.hasComments && (
-              <button
-                onClick={() => handleViewOrUpdateComments(row.pk_test)}
-                className="text-green-600 hover:text-green-800 cursor-pointer"
-                title="Ver comentarios"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </button>
-            )}
+          {/* Agregar comentario */}
+          {/**
+           * <button
+            onClick={() => handleAddCommentClick(row.pk_test)}
+            className="text-green-600 hover:text-green-800 cursor-pointer"
+            title="Add Comment"
+          >
+            <MessageSquarePlus className="w-5 h-5" />
+          </button>
+           */}
 
-            {/* Agregar comentario siempre visible */}
-            <button
-              onClick={() => handleAddCommentClick(row.pk_test)}
-              className="text-green-600 hover:text-green-800 cursor-pointer"
-              title="Agregar comentario"
-            >
-              <MessageSquarePlus className="w-5 h-5" />
-            </button>
-
-            {/* Reintentar test */}
-            <button
-              onClick={() => {
-                if (canRetry) {
-                  handleRetryTest(row.pk_test);
-                }
-              }}
-              className={`${canRetry ? "text-red-600 hover:text-red-800 cursor-pointer" : "text-gray-400 cursor-not-allowed"}`}
-              title={canRetry ? "Reintentar test" : "No se puede reintentar test completado"}
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
-          </div>
-        );
-      },
+          {/* Reintentar test */}
+          <button
+            onClick={() => {
+              if (row.status !== "COMPLETED") {
+                handleRetryTest(row.pk_test);
+              }
+            }}
+            className={`text-red-600 hover:text-red-800 ${
+              row.status !== "COMPLETED"
+                ? "cursor-pointer"
+                : "text-gray-400 cursor-not-allowed"
+            }`}
+            title={
+              row.status !== "COMPLETED"
+                ? "Retry test"
+                : "Cannot retry completed test"
+            }
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+        </div>
+      ),
     },
   ];
-
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -636,13 +717,31 @@ const Tests = () => {
   };
 
   const commentFields = [
-    { name: "comment_title", label: "Title", type: "text", validation: { required: "The title is required" } },
-    { name: "comment_value", label: "Comment", type: "textarea", validation: { required: "Comment is required" } },
+    {
+      name: "comment_title",
+      label: "Title",
+      type: "text",
+      validation: { required: "The title is required" },
+    },
+    {
+      name: "comment_value",
+      label: "Comment",
+      type: "textarea",
+      validation: { required: "Comment is required" },
+    },
   ];
 
-  const commentFormFields = comments.length > 0 || isAddingComment
-    ? commentFields
-    : commentFields;
+  // Función para dividir el texto de los speakers en líneas separadas
+  const formatConversation = (text) => {
+    if (!text) return [];
+    // Divide el texto en cada aparición de [SPEAKER_X]
+    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
+    return speakerLines.map((line, index) => (
+      <p key={index} className="mb-1">
+        {line.trim()}
+      </p>
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center p-6">
@@ -788,22 +887,24 @@ const Tests = () => {
               {filters.language === "es" ? (
                 <ul className="list-disc pl-5 text-gray-700 space-y-2">
                   <li>
-                    El examen TOEIC Online Listening and Reading dura 2 horas (120
-                    minutos): 50 preguntas de Listening y 50 de Reading.
+                    El examen TOEIC Online Listening and Reading dura 2 horas
+                    (120 minutos): 50 preguntas de Listening y 50 de Reading.
                   </li>
                   <li>
-                    Responde cuidadosamente las 100 preguntas de opción múltiple.
+                    Responde cuidadosamente las 100 preguntas de opción
+                    múltiple.
                   </li>
                   <li>
-                    Es indispensable tener una conexión estable a internet durante
-                    todo el examen.
+                    Es indispensable tener una conexión estable a internet
+                    durante todo el examen.
                   </li>
                   <li>
                     Usa un ambiente silencioso y sin distracciones para asegurar
                     tu concentración.
                   </li>
                   <li>
-                    Una vez enviado el examen, no podrás modificar tus respuestas.
+                    Una vez enviado el examen, no podrás modificar tus
+                    respuestas.
                   </li>
                   <li>
                     No está permitido usar ayudas o dispositivos no autorizados
@@ -825,15 +926,18 @@ const Tests = () => {
               ) : (
                 <ul className="list-disc pl-5 text-gray-700 space-y-2">
                   <li>
-                    The TOEIC Online Listening and Reading test lasts 2 hours (120
-                    minutes): 50 Listening questions and 50 Reading questions.
+                    The TOEIC Online Listening and Reading test lasts 2 hours
+                    (120 minutes): 50 Listening questions and 50 Reading
+                    questions.
                   </li>
                   <li>Carefully answer all 100 multiple-choice questions.</li>
                   <li>
-                    A stable internet connection throughout the test is essential.
+                    A stable internet connection throughout the test is
+                    essential.
                   </li>
                   <li>
-                    Use a quiet environment free of distractions to ensure focus.
+                    Use a quiet environment free of distractions to ensure
+                    focus.
                   </li>
                   <li>
                     Once the test is submitted, you cannot change your answers.
@@ -847,8 +951,8 @@ const Tests = () => {
                   </li>
                   <li>You are allowed only three (3) test attempts per day.</li>
                   <li>
-                    If you close the test without completing it, one attempt will
-                    be consumed and your answers will not be submitted or
+                    If you close the test without completing it, one attempt
+                    will be consumed and your answers will not be submitted or
                     evaluated.
                   </li>
                 </ul>
@@ -882,64 +986,167 @@ const Tests = () => {
           resultData={resultData}
         />
 
-        {/* Modal for Adding Comments */}
+        {/* Modal for Viewing Exam and Comments */}
         <Modal
-          isOpen={showCommentModal}
+          isOpen={showExamModal}
           onClose={() => {
-            setShowCommentModal(false);
+            setShowExamModal(false);
             setIsAddingComment(false);
             setSelectedTestId(null);
             setSelectedComment(null);
+            setExamDetails(null);
+            fetchTests(); // Refresca la tabla al cerrar
           }}
-          title={isAddingComment ? `Add Comment to Test #${selectedTestId}` : `View/Edit Comments for Test #${selectedTestId}`}
+          title={`View Exam and Comments for Test #${selectedTestId}`}
         >
           <div className="max-h-[80vh] overflow-y-auto">
-            {isAddingComment ? (
-              <div className="p-2">
-                <Form
-                  fields={commentFields}
-                  onSubmit={handleAddComment}
-                  onCancel={() => {
-                    setShowCommentModal(false);
-                    setIsAddingComment(false);
-                    setSelectedTestId(null);
-                  }}
-                  submitText="Save Comment"
-                  layout="grid-cols-1"
-                />
-              </div>
-            ) : comments.length > 0 ? (
-              <div className="p-2">
-                <h3 className="text-lg font-semibold mb-2">Existing Comments</h3>
-                <div className="space-y-2">
-                  {comments.map((comment) => (
-                    <div
-                      key={comment.pk_comment}
-                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-semibold text-lg">{comment.comment_title}</h4>
-                          <p className="text-gray-600 mt-2">{comment.comment_value}</p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            by {comment.author}, {new Date(comment.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleEditCommentClick(comment)}
-                          className="text-blue-600 hover:text-blue-800 ml-4"
-                          title="Edit Comment"
-                        >
-                          <Edit2 className="w-5 h-5" />
-                        </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
+              {/* Exam Details Section */}
+              <div
+                className="p-2 border-r border-gray-200 overflow-y-auto"
+                style={{ maxHeight: "70vh" }}
+              >
+                <h3 className="text-lg font-semibold mb-2">Exam Details</h3>
+                {examDetails ? (
+                  <div className="space-y-4">
+                    {examDetails.map((section, sectionIndex) => (
+                      <div key={section.section_type}>
+                        <h4 className="font-bold text-lg mb-2">
+                          {section.section_desc} ({section.section_type})
+                        </h4>
+                        {section.titles.map((title, titleIndex) => (
+                          <div key={title.title_id} className="mb-4">
+                            {/* Mostrar el texto de la conversación con saltos de línea */}
+                            <div className="font-semibold text-md mb-2">
+                              {formatConversation(title.title_test)}
+                            </div>
+                            {title.questions.map((question, questionIndex) => (
+                              <div
+                                key={question.question_id}
+                                className="bg-gray-50 p-4 rounded-lg shadow-sm mb-2"
+                              >
+                                <p className="font-semibold">
+                                  {sectionIndex + 1}.{titleIndex + 1}.
+                                  {questionIndex + 1} {question.question_text}
+                                </p>
+                                {/**
+                                 * <p>
+                                  <strong>Student's Answer:</strong>{" "}
+                                  {question.student_answer
+                                    ? question.student_answer.text
+                                    : "Not answered"}
+                                </p>
+                                 */}
+                                <ul className="list-disc pl-5 mt-2">
+                                  {question.options.map((option) => (
+                                    <li
+                                      key={option.option_id}
+                                      className={`${
+                                        question.student_answer?.option_id ===
+                                        option.option_id
+                                          ? "text-blue-600 font-medium"
+                                          : ""
+                                      } ${
+                                        question.correct_answer?.option_id ===
+                                        option.option_id
+                                          ? "text-green-600 font-medium"
+                                          : ""
+                                      }`}
+                                    >
+                                      {option.text}
+                                      {question.student_answer?.option_id ===
+                                        option.option_id && (
+                                        <span className="ml-2 text-blue-600">
+                                          (Student's Answer)
+                                        </span>
+                                      )}
+                                      {question.correct_answer?.option_id ===
+                                        option.option_id && (
+                                        <span className="ml-2 text-green-600">
+                                          (Correct Answer)
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">Loading exam details...</p>
+                )}
               </div>
-            ) : (
-              <p className="p-2 text-gray-600">No comments available.</p>
-            )}
+
+              {/* Comments Section */}
+              <div
+                className="p-2 overflow-y-auto"
+                style={{ maxHeight: "70vh" }}
+              >
+                <h3 className="text-lg font-semibold mb-2">Comments</h3>
+                {isAddingComment ? (
+                  <div>
+                    <Form
+                      fields={commentFields}
+                      onSubmit={handleAddComment}
+                      onCancel={() => setIsAddingComment(false)}
+                      submitText="Save Comment"
+                      layout="grid-cols-1"
+                    />
+                  </div>
+                ) : comments.length > 0 ? (
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div
+                        key={comment.pk_comment}
+                        className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-lg">
+                              {comment.comment_title}
+                            </h4>
+                            <p className="text-gray-600 mt-2">
+                              {comment.comment_value}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              by {comment.author},{" "}
+                              {new Date(comment.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleEditCommentClick(comment)}
+                            className="text-blue-600 hover:text-blue-800 ml-4"
+                            title="Edit Comment"
+                          >
+                            <Edit2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setIsAddingComment(true)}
+                      className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-xl"
+                    >
+                      Add New Comment
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-gray-600 mb-2">No comments available.</p>
+                    <button
+                      onClick={() => setIsAddingComment(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-xl"
+                    >
+                      Add Comment
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </Modal>
 
