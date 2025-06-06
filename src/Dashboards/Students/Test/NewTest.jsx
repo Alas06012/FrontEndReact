@@ -49,7 +49,7 @@ const Tests = () => {
   const [selectedComment, setSelectedComment] = useState(null);
   const [comments, setComments] = useState([]);
   const [examDetails, setExamDetails] = useState(null);
-
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
 
@@ -287,7 +287,7 @@ const Tests = () => {
 
     setShowDetailsModal(false);
     setTestStarted(false);
-
+    setIsLoading(true);
     try {
       const payload = {
         test_id: detailsData.test_id,
@@ -335,6 +335,8 @@ const Tests = () => {
         background: "#1e293b",
         color: "white",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -573,7 +575,7 @@ const Tests = () => {
       color: 'white',
     });
 
-        if (!confirmRetry?.isConfirmed) return;
+    if (!confirmRetry?.isConfirmed) return;
 
 
     try {
@@ -586,7 +588,7 @@ const Tests = () => {
         color: 'white',
       });
     } catch (error) {
-     await Alert({
+      await Alert({
         title: 'Error',
         text: 'There was a problem restarting the test. Please try again.',
         icon: 'error',
@@ -633,8 +635,8 @@ const Tests = () => {
               }
             }}
             className={`text-purple-600 hover:text-purple-800 ${row.status === "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
+              ? "cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
               }`}
             title={
               row.status === "COMPLETED"
@@ -673,8 +675,8 @@ const Tests = () => {
               }
             }}
             className={`text-red-600 hover:text-red-800 ${row.status !== "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
+              ? "cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
               }`}
             title={
               row.status !== "COMPLETED"
@@ -1024,9 +1026,9 @@ const Tests = () => {
                                     <li
                                       key={option.option_id}
                                       className={`${question.student_answer?.option_id ===
-                                          option.option_id
-                                          ? "text-blue-600 font-medium"
-                                          : ""
+                                        option.option_id
+                                        ? "text-blue-600 font-medium"
+                                        : ""
                                         } ${question.correct_answer?.option_id ===
                                           option.option_id
                                           ? "text-green-600 font-medium"
@@ -1161,6 +1163,14 @@ const Tests = () => {
           </div>
         </Modal>
       </div>
+      {isLoading && (
+        <div className="fixed inset-0 bg-opacity-80 z-50 flex items-center justify-center">
+          <div className="bg-white border border-gray-200 shadow-xl rounded-2xl px-8 py-6 flex flex-col items-center space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-800 text-base font-medium">Espere, evaluando el test...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
