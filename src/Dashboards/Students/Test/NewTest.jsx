@@ -41,6 +41,7 @@ const Tests = () => {
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [selectedComment, setSelectedComment] = useState(null);
   const [comments, setComments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
@@ -271,8 +272,9 @@ const Tests = () => {
 
   setShowDetailsModal(false);
   setTestStarted(false);
-
+setIsLoading(true);
   try {
+    
     const payload = {
       test_id: detailsData.test_id,
       detalles: responses.detalles,
@@ -318,7 +320,10 @@ const Tests = () => {
       background: "#1e293b",
       color: "white",
     });
-  }
+ } finally {
+  setIsLoading(false);
+}
+
 };
 
   const handleViewResult = async (testId) => {
@@ -499,6 +504,7 @@ const Tests = () => {
       });
     }
   };
+
   const handleAddCommentClick = (testId) => {
     setSelectedTestId(testId);
     setShowCommentModal(true);
@@ -973,8 +979,18 @@ const Tests = () => {
             )}
           </div>
         </Modal>
+        
       </div>
+       {isLoading && (
+     <div className="fixed inset-0 bg-opacity-80 z-50 flex items-center justify-center">
+    <div className="bg-white border border-gray-200 shadow-xl rounded-2xl px-8 py-6 flex flex-col items-center space-y-4">
+      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-gray-800 text-base font-medium">Espere, evaluando el test...</p>
     </div>
+  </div>
+  )}
+    </div>
+    
   );
 };
 
