@@ -456,10 +456,10 @@ const Tests = () => {
           prevComments.map((comment) =>
             comment.pk_comment === selectedComment.pk_comment
               ? {
-                ...comment,
-                comment_title: data.comment_title,
-                comment_value: data.comment_value,
-              }
+                  ...comment,
+                  comment_title: data.comment_title,
+                  comment_value: data.comment_value,
+                }
               : comment
           )
         );
@@ -565,35 +565,34 @@ const Tests = () => {
 
   const handleRetryTest = async (testId) => {
     const confirmRetry = await Alert({
-      title: 'Restart Test?',
-      text: 'This will count as a new attempt and any previous answers may be cleared.',
-      icon: 'warning',
-      type: 'confirm',
-      confirmButtonText: 'Yes, restart',
-      cancelButtonText: 'Cancel',
-      background: '#1e293b',
-      color: 'white',
+      title: "Restart Test?",
+      text: "This will count as a new attempt and any previous answers may be cleared.",
+      icon: "warning",
+      type: "confirm",
+      confirmButtonText: "Yes, restart",
+      cancelButtonText: "Cancel",
+      background: "#1e293b",
+      color: "white",
     });
 
     if (!confirmRetry?.isConfirmed) return;
 
-
     try {
       await fetchTestData(testId);
       await Alert({
-        title: 'Test Loaded',
-        text: 'You have started a new attempt. Good luck!',
-        icon: 'success',
-        background: '#1e293b',
-        color: 'white',
+        title: "Test Loaded",
+        text: "You have started a new attempt. Good luck!",
+        icon: "success",
+        background: "#1e293b",
+        color: "white",
       });
     } catch (error) {
       await Alert({
-        title: 'Error',
-        text: 'There was a problem restarting the test. Please try again.',
-        icon: 'error',
-        background: '#1e293b',
-        color: 'white',
+        title: "Error",
+        text: "There was a problem restarting the test. Please try again.",
+        icon: "error",
+        background: "#1e293b",
+        color: "white",
       });
     }
   };
@@ -634,10 +633,11 @@ const Tests = () => {
                 handleViewResult(row.pk_test);
               }
             }}
-            className={`text-purple-600 hover:text-purple-800 ${row.status === "COMPLETED"
-              ? "cursor-pointer"
-              : "text-gray-400 cursor-not-allowed"
-              }`}
+            className={`text-purple-600 hover:text-purple-800 ${
+              row.status === "COMPLETED"
+                ? "cursor-pointer"
+                : "text-gray-400 cursor-not-allowed"
+            }`}
             title={
               row.status === "COMPLETED"
                 ? "View test result"
@@ -674,10 +674,11 @@ const Tests = () => {
                 handleRetryTest(row.pk_test);
               }
             }}
-            className={`text-red-600 hover:text-red-800 ${row.status !== "COMPLETED"
-              ? "cursor-pointer"
-              : "text-gray-400 cursor-not-allowed"
-              }`}
+            className={`text-red-600 hover:text-red-800 ${
+              row.status !== "COMPLETED"
+                ? "cursor-pointer"
+                : "text-gray-400 cursor-not-allowed"
+            }`}
             title={
               row.status !== "COMPLETED"
                 ? "Retry test"
@@ -983,71 +984,73 @@ const Tests = () => {
           }}
           title={`View Exam and Comments for Test #${selectedTestId}`}
         >
-          <div className="max-h-[80vh] overflow-y-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
+          <div className="max-h-[80vh] overflow-y-auto p-4 bg-gray-50 rounded-xl shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Exam Details Section */}
               <div
-                className="p-2 border-r border-gray-200 overflow-y-auto"
+                className="p-4 border-r border-gray-200 overflow-y-auto"
                 style={{ maxHeight: "70vh" }}
               >
-                <h3 className="text-lg font-semibold mb-2">Exam Details</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                  Exam Details
+                </h3>
                 {examDetails ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {examDetails.map((section, sectionIndex) => (
-                      <div key={section.section_type}>
-                        <h4 className="font-bold text-lg mb-2">
+                      <div
+                        key={section.section_type}
+                        className={`p-4 rounded-xl shadow-md ${
+                          section.section_type === "READING"
+                            ? "bg-blue-50 border-l-4 border-blue-500"
+                            : "bg-green-50 border-l-4 border-green-500"
+                        } transition duration-300 hover:shadow-lg`}
+                      >
+                        <h4 className="font-bold text-lg mb-4 text-gray-900">
                           {section.section_desc} ({section.section_type})
                         </h4>
                         {section.titles.map((title, titleIndex) => (
-                          <div key={title.title_id} className="mb-4">
-                            {/* Mostrar el texto de la conversación con saltos de línea */}
-                            <div className="font-semibold text-md mb-2">
+                          <div key={title.title_id} className="mb-6">
+                            <div className="font-semibold text-md mb-3 text-gray-700">
                               {formatConversation(title.title_test)}
                             </div>
                             {title.questions.map((question, questionIndex) => (
                               <div
                                 key={question.question_id}
-                                className="bg-gray-50 p-4 rounded-lg shadow-sm mb-2"
+                                className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
                               >
-                                <p className="font-semibold">
+                                <p className="font-semibold text-gray-800 mb-2">
                                   {sectionIndex + 1}.{titleIndex + 1}.
                                   {questionIndex + 1} {question.question_text}
                                 </p>
-                                {/**
-                                 * <p>
-                                  <strong>Student's Answer:</strong>{" "}
-                                  {question.student_answer
-                                    ? question.student_answer.text
-                                    : "Not answered"}
-                                </p>
-                                 */}
-                                <ul className="list-disc pl-5 mt-2">
+                                <ul className="list-disc pl-5 space-y-1">
                                   {question.options.map((option) => (
                                     <li
                                       key={option.option_id}
-                                      className={`${question.student_answer?.option_id ===
+                                      className={`text-gray-700 ${
+                                        question.student_answer?.option_id ===
                                         option.option_id
-                                        ? "text-blue-600 font-medium"
-                                        : ""
-                                        } ${question.correct_answer?.option_id ===
-                                          option.option_id
+                                          ? "text-blue-600 font-medium"
+                                          : ""
+                                      } ${
+                                        question.correct_answer?.option_id ===
+                                        option.option_id
                                           ? "text-green-600 font-medium"
                                           : ""
-                                        }`}
+                                      }`}
                                     >
                                       {option.text}
                                       {question.student_answer?.option_id ===
                                         option.option_id && (
-                                          <span className="ml-2 text-blue-600">
-                                            (Student's Answer)
-                                          </span>
-                                        )}
+                                        <span className="ml-2 text-blue-600">
+                                          (Student's Answer)
+                                        </span>
+                                      )}
                                       {question.correct_answer?.option_id ===
                                         option.option_id && (
-                                          <span className="ml-2 text-green-600">
-                                            (Correct Answer)
-                                          </span>
-                                        )}
+                                        <span className="ml-2 text-green-600">
+                                          (Correct Answer)
+                                        </span>
+                                      )}
                                     </li>
                                   ))}
                                 </ul>
@@ -1065,10 +1068,12 @@ const Tests = () => {
 
               {/* Comments Section */}
               <div
-                className="p-2 overflow-y-auto"
+                className="p-4 overflow-y-auto"
                 style={{ maxHeight: "70vh" }}
               >
-                <h3 className="text-lg font-semibold mb-2">Comments</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                  Comments
+                </h3>
                 {isAddingComment ? (
                   <div>
                     <Form
@@ -1080,15 +1085,15 @@ const Tests = () => {
                     />
                   </div>
                 ) : comments.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {comments.map((comment) => (
                       <div
                         key={comment.pk_comment}
-                        className="bg-white p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg"
+                        className="bg-white p-4 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition duration-300"
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-semibold text-lg">
+                            <h4 className="font-semibold text-lg text-gray-900">
                               {comment.comment_title}
                             </h4>
                             <p className="text-gray-600 mt-2">
@@ -1101,7 +1106,7 @@ const Tests = () => {
                           </div>
                           <button
                             onClick={() => handleEditCommentClick(comment)}
-                            className="text-blue-600 hover:text-blue-800 ml-4"
+                            className="text-blue-600 hover:text-blue-800 ml-4 transition duration-200"
                             title="Edit Comment"
                           >
                             <Edit2 className="w-5 h-5" />
@@ -1111,17 +1116,17 @@ const Tests = () => {
                     ))}
                     <button
                       onClick={() => setIsAddingComment(true)}
-                      className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-xl"
+                      className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
                     >
                       Add New Comment
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-gray-600 mb-2">No comments available.</p>
+                    <p className="text-gray-600 mb-4">No comments available.</p>
                     <button
                       onClick={() => setIsAddingComment(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-xl"
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
                     >
                       Add Comment
                     </button>
@@ -1167,7 +1172,9 @@ const Tests = () => {
         <div className="fixed inset-0 bg-opacity-80 z-50 flex items-center justify-center">
           <div className="bg-white border border-gray-200 shadow-xl rounded-2xl px-8 py-6 flex flex-col items-center space-y-4">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-800 text-base font-medium">Espere, evaluando el test...</p>
+            <p className="text-gray-800 text-base font-medium">
+              Espere, evaluando el test...
+            </p>
           </div>
         </div>
       )}
