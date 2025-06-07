@@ -5,7 +5,7 @@ import LogoITCA from '../assets/LogoITCA_Web.png';
 import { getUserRole } from '../Utils/auth.js';
 import { API_URL } from '/config.js';
 
-const TIMER_DURATION = 180; // 3 minutes
+const TIMER_DURATION = 150; // 3 minutes
 
 export default function VerifyCode() {
     const [email, setEmail] = useState('');
