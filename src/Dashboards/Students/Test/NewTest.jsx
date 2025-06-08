@@ -607,6 +607,24 @@ const Tests = () => {
 
   const tableColumns = [
     { header: "ID Test", key: "pk_test" },
+    {
+      header: "Created At",
+      key: "created_at",
+      sortable: true,
+      render: (row) => {
+        const date = new Date(row.created_at);
+        const formattedDate = new Intl.DateTimeFormat('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true, // <- esto activa el AM / PM
+        }).format(date);
+        return formattedDate;
+      },
+      sortValue: (row) => new Date(row.created_at).getTime(),
+    },
     { header: "Email", key: "user_email" },
     { header: "Name", key: "user_name" },
     { header: "Lastname", key: "user_lastname" },
