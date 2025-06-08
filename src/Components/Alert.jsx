@@ -9,7 +9,7 @@ const Alert = ({
   color = 'white',
   // Nuevas props (opcionales)
   type, // undefined = comportamiento original
-  confirmButtonText = 'Sí',
+  confirmButtonText = 'Yes',
   cancelButtonText = 'No',
   showCancelButton = true
 }) => {
@@ -23,19 +23,19 @@ const Alert = ({
     iconColor: 'white',
   };
 
-  // Comportamiento ORIGINAL (si no se especifica 'type')
-  if (!type) {
+  // Nuevos comportamientos (opcionales)
+  if (type === 'confirm') {
+    // Diálogo de confirmación
     return Swal.fire({
       ...baseConfig,
-      toast: true,
-      position: 'top',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
+      showCancelButton,
+      confirmButtonText,
+      cancelButtonText,
+      confirmButtonColor: '#4f46e5', // indigo-600
+      cancelButtonColor: '#ef4444', // red-500
     });
   }
 
-  // Nuevos comportamientos (opcionales)
   if (type === 'toast') {
     // Toast con personalización extra
     return Swal.fire({
@@ -48,17 +48,20 @@ const Alert = ({
     });
   }
 
-  if (type === 'confirm') {
-    // Diálogo de confirmación
+  // Comportamiento ORIGINAL (si no se especifica 'type')
+  if (!type) {
     return Swal.fire({
       ...baseConfig,
-      showCancelButton,
-      confirmButtonText,
-      cancelButtonText,
-      confirmButtonColor: '#4f46e5', // indigo-600
-      cancelButtonColor: '#ef4444', // red-500
+      toast: true,
+      position: 'top',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
     });
   }
+
+  // Fallback por si se pasa un type desconocido (retorna alert básico)
+  return Swal.fire(baseConfig);
 };
 
 export default Alert;

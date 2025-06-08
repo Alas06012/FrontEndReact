@@ -6,12 +6,21 @@ import PageNotFound from './Others/PageNotFound';
 import StudentDashboard from './Dashboards/StudentsHome';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
-import StudyMaterials from './Dashboards/Students/StudyMaterials';
-import NewTest from './Dashboards/Students/NewTest';
+import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
+//import StudyMaterials from './Dashboards/Students/StudyMaterials';
+import StudyMaterials from '../src/Dashboards/Admin/study_materials/StudyMaterials';
+import TestComments from '../src/Dashboards/Admin/test_comments/TestComments';
+import NewTest from './Dashboards/Students/Test/NewTest';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
 
 import ProtectedRoute from './Auth/ProtectedRoute';
 import Layout from './Components/Layout';
+
+import TitlesAdmin from './Dashboards/Admin/questions_titles/TitlesAdmin';
+import QuestionsAdmin from './Dashboards/Admin/Questions/QuestionAdmin';
+import VerifyCode from './Auth/VerifyCode';
+import ForgotPassword from './Auth/ForgotPassword';
+import ResetPassword from './Auth/ResetPassword';
 
 export default function App() {
   return (
@@ -22,6 +31,9 @@ export default function App() {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-code" element={<VerifyCode />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Rutas protegidas */}
 
@@ -43,7 +55,19 @@ export default function App() {
             <Route path="admin">
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<UsersAdmin />} />
+              <Route path="prompts" element={<Prompts />} />
+              <Route path="study_materials" element={<StudyMaterials />} />
+              <Route path="test_comments" element={<TestComments />} />
               <Route path="questionsbank" element={<QuestionBank />} />
+              <Route path="TitlesAdmin" element={<TitlesAdmin />} />
+              <Route path="QuestionsAdmin" element={<QuestionsAdmin />} />
+           
+            </Route>
+
+            {/* Rutas para teacher */}
+            <Route path="teacher" >
+              <Route index element={<StudentDashboard />} />
+              <Route path="materials" element={<StudyMaterials />} />
             </Route>
 
             {/* Rutas para student */}
