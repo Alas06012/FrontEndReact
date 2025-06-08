@@ -6,7 +6,8 @@ import Table from '../../../Components/Table.jsx';
 import Pagination from '../../../Components/Pagination.jsx';
 import Modal from '../../../Components/Modal.jsx';
 import QuestionForm from './QuestionForm.jsx';
-import { Edit, XCircle, CheckCircle, Search, Plus } from 'lucide-react'; // Añadimos el icono Search
+import SearchableSelect from '../../../Components/SearchableSelect';
+import { Edit, XCircle, CheckCircle, Search, Plus } from 'lucide-react';
 
 const QuestionsAdmin = () => {
     const [page, setPage] = useState(1);
@@ -16,7 +17,7 @@ const QuestionsAdmin = () => {
     const [perPage, setPerPage] = useState(10);
     const [filters, setFilters] = useState({
         searchText: '',
-        status: 'Todos',
+        status: 'ALL',
         title_id: '',
         level_id: '',
         toeic_section_id: '',
@@ -26,6 +27,7 @@ const QuestionsAdmin = () => {
     const [titles, setTitles] = useState([]);
     const [levels, setLevels] = useState([]);
     const [toeicSections, setToeicSections] = useState([]);
+    const [loadingCatalogs, setLoadingCatalogs] = useState(false);
 
     const token = getAccessToken();
 
@@ -77,13 +79,15 @@ const QuestionsAdmin = () => {
     useEffect(() => {
         const fetchCatalog = async (endpoint, setter, key) => {
             try {
+                setLoadingCatalogs(true);
+                const per_page = 1000;
                 const res = await fetch(`${API_URL}/${endpoint}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ page, search }),
+                    body: JSON.stringify({ page, per_page, search }),
                 });
 
                 if (!res.ok) throw new Error(`Error al cargar ${endpoint}`);
@@ -91,13 +95,15 @@ const QuestionsAdmin = () => {
                 setter(data[key] || []);
             } catch (err) {
                 console.error(`Error en ${endpoint}:`, err.message);
+            } finally {
+                setLoadingCatalogs(false);
             }
         };
 
         fetchCatalog('stories', setTitles, 'titles');
         fetchCatalog('levels', setLevels, 'levels');
         fetchCatalog('sections', setToeicSections, 'sections');
-    }, [token, page, search]);  // Añadir dependencias necesarias
+    }, [token, page, search]);
 
     useEffect(() => {
         fetchQuestions(pagination.current_page, perPage);
@@ -214,20 +220,20 @@ const QuestionsAdmin = () => {
         setPagination((prev) => ({ ...prev, current_page: 1 }));
     };
 
-    const handleStatusChange = (e) => {
-        setFilters((prev) => ({ ...prev, status: e.target.value }));
+    const handleStatusChange = (value) => {
+        setFilters((prev) => ({ ...prev, status: value }));
         setPagination((prev) => ({ ...prev, current_page: 1 }));
     };
 
-    const handleFieldChange = (e, field) => {
-        setFilters((prev) => ({ ...prev, [field]: e.target.value }));
+    const handleFieldChange = (field, value) => {
+        setFilters((prev) => ({ ...prev, [field]: value }));
         setPagination((prev) => ({ ...prev, current_page: 1 }));
     };
 
     const handleClearAllFilters = () => {
         setFilters({
             searchText: '',
-            status: 'Todos',
+            status: 'ALL',
             title_id: '',
             level_id: '',
             toeic_section_id: '',
@@ -268,9 +274,9 @@ const QuestionsAdmin = () => {
     );
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-Paleta-GrisClaro">
-            <div className="w-full max-w-6xl bg-Paleta-Blanco rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold text-center mb-6 text-black">Question Management</h1>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="w-full max-w-6xl bg-white rounded-lg shadow-md p-6">
+                <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Question Management</h1>
 
                 <div className="mb-6 space-y-6">
                     <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-700">
@@ -286,42 +292,70 @@ const QuestionsAdmin = () => {
                             value={filters.searchText}
                             onChange={handleSearchChange}
                         />
-                        <button
+                        {/* <button
                             onClick={handleClearSearch}
                             className="text-red-500 hover:text-red-700 flex items-center gap-1"
                         >
                             <XCircle className="h-5 w-5" /> Clear search
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Filters grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <select className={inputClass} value={filters.status} onChange={handleStatusChange}>
-                            <option value="ALL">All</option>
-                            <option value="ACTIVE">Active</option>
-                            <option value="INACTIVE">Inactive</option>
-                        </select>
+                        <SearchableSelect
+                            options={[
+                                { value: 'ALL', label: 'All Status' },
+                                { value: 'ACTIVE', label: 'Active' },
+                                { value: 'INACTIVE', label: 'Inactive' }
+                            ]}
+                            value={filters.status}
+                            onChange={handleStatusChange}
+                            placeholder="Select status"
+                            className="w-full"
+                            disabled={loadingCatalogs}
+                        />
 
-                        <select className={inputClass} value={filters.title_id} onChange={(e) => handleFieldChange(e, 'title_id')}>
-                            <option value="">Select a Title</option>
-                            {titles.map((title) => (
-                                <option key={title.pk_title} value={title.pk_title}>{title.title_name}</option>
-                            ))}
-                        </select>
+                        <SearchableSelect
+                            options={titles.map(title => ({
+                                value: title.pk_title,
+                                label: title.title_name
+                            }))}
+                            value={filters.title_id}
+                            onChange={(value) => handleFieldChange('title_id', value)}
+                            placeholder="Select a Title"
+                            className="w-full"
+                            disabled={loadingCatalogs}
+                            loading={loadingCatalogs}
+                            noOptionsMessage="No titles available"
+                        />
 
-                        <select className={inputClass} value={filters.level_id} onChange={(e) => handleFieldChange(e, 'level_id')}>
-                            <option value="">Select a Level</option>
-                            {levels.map((level) => (
-                                <option key={level.pk_level} value={level.pk_level}>{level.level_name}</option>
-                            ))}
-                        </select>
+                        <SearchableSelect
+                            options={levels.map(level => ({
+                                value: level.pk_level,
+                                label: level.level_name
+                            }))}
+                            value={filters.level_id}
+                            onChange={(value) => handleFieldChange('level_id', value)}
+                            placeholder="Select a Level"
+                            className="w-full"
+                            disabled={loadingCatalogs}
+                            loading={loadingCatalogs}
+                            noOptionsMessage="No levels available"
+                        />
 
-                        <select className={inputClass} value={filters.toeic_section_id} onChange={(e) => handleFieldChange(e, 'toeic_section_id')}>
-                            <option value="">Select a Section</option>
-                            {toeicSections.map((section) => (
-                                <option key={section.section_pk} value={section.section_pk}>{section.section_desc}</option>
-                            ))}
-                        </select>
+                        <SearchableSelect
+                            options={toeicSections.map(section => ({
+                                value: section.section_pk,
+                                label: section.section_desc
+                            }))}
+                            value={filters.toeic_section_id}
+                            onChange={(value) => handleFieldChange('toeic_section_id', value)}
+                            placeholder="Select a Section"
+                            className="w-full"
+                            disabled={loadingCatalogs}
+                            loading={loadingCatalogs}
+                            noOptionsMessage="No sections available"
+                        />
                     </div>
 
                     {/* Action buttons */}

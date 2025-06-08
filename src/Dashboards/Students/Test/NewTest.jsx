@@ -807,24 +807,11 @@ const Tests = () => {
         />
 
         {/* Pagination */}
-        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Pagination
+         <Pagination
             currentPage={pagination.current_page}
             totalPages={pagination.total_pages}
             onPageChange={changePage}
           />
-          <select
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={perPage}
-            onChange={handlePerPageChange}
-          >
-            {[10, 20, 50].map((n) => (
-              <option key={n} value={n}>
-                {n} per page
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Modal for Test Form */}
         <TestFormModal

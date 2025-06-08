@@ -669,6 +669,7 @@ const StudyMaterials = () => {
           onPageChange={changePage}
           perPage={perPage}
           onPerPageChange={handlePerPageChange}
+          maxVisiblePages={5}
         />
 
         <Modal

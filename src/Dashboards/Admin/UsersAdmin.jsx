@@ -100,7 +100,6 @@ const Users = () => {
       user_email: data.email,
       user_name: data.name,
       user_lastname: data.lastname,
-      user_carnet: data.carnet,
       user_role: data.role,
       status: data.status,
     };
@@ -115,7 +114,6 @@ const Users = () => {
         ? {
             name: data.name,
             lastname: data.lastname,
-            carnet: data.carnet,
             role: data.role,
             current_email: editUser.user_email,
             new_email: data.email !== editUser.user_email ? data.email : undefined,
@@ -123,7 +121,6 @@ const Users = () => {
         : {
             name: data.name,
             lastname: data.lastname,
-            carnet: data.carnet,
             email: data.email,
             role: data.role,
             password: data.password,
@@ -302,7 +299,6 @@ const Users = () => {
     { header: 'Name', key: 'user_name' },
     { header: 'Lastname', key: 'user_lastname' },
     { header: 'Email', key: 'user_email' },
-    { header: 'Carnet', key: 'user_carnet' },
     { header: 'Role', key: 'user_role' },
     {
       header: 'Status',
@@ -318,7 +314,6 @@ const Users = () => {
   const formFields = [
     { name: 'name', label: 'Name', validation: { required: 'The name is required', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'The name can only contain letters and spaces' } } },
     { name: 'lastname', label: 'Lastname', validation: { required: 'The lastname is required', pattern: { value: /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, message: 'The lastname can only contain letters and spaces' } } },
-    { name: 'carnet', label: 'Carnet', validation: { required: 'The carnet is required', pattern: { value: /^[0-9]{6}$/, message: 'The carnet must contain exactly 6 numeric digits' } } },
     { name: 'email', label: 'Email', type: 'email', validation: { required: 'The email is required' } },
     { name: 'role', label: 'Role', type: 'select', options: [{ value: 'student', label: 'Student' }, { value: 'admin', label: 'Administrator' }, , { value: 'teacher', label: 'Teacher' }], validation: { required: 'The role is required' } },
 ];
@@ -327,7 +322,6 @@ const Users = () => {
     { name: 'email', label: 'Email', type: 'text' },
     { name: 'name', label: 'Name', type: 'text' },
     { name: 'lastname', label: 'Lastname', type: 'text' },
-    { name: 'carnet', label: 'Carnet', type: 'text' },
     { name: 'role', label: 'Role', type: 'select', options: [{ value: '', label: 'All' }, { value: 'admin', label: 'Admin' }, { value: 'student', label: 'Student' }, { value: 'teacher', label: 'Teacher' }] },
     { name: 'status', label: 'Status', type: 'select', options: [{ value: '', label: 'All' }, { value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }] },
   ];
@@ -336,7 +330,6 @@ const Users = () => {
     email: '',
     name: '',
     lastname: '',
-    carnet: '',
     role: '',
     status: '',
   };
@@ -416,13 +409,11 @@ const Users = () => {
             initialData={editUser ? {
               name: editUser.user_name,
               lastname: editUser.user_lastname,
-              carnet: editUser.user_carnet,
               email: editUser.user_email,
               role: editUser.user_role,
             } : {
               name: '',
               lastname: '',
-              carnet: '',
               email: '',
               role: 'student',
               password: '',
