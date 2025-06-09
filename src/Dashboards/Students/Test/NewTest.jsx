@@ -54,7 +54,7 @@ const Tests = () => {
   const userRole = getUserRole()?.toLowerCase();
 
   useEffect(() => {
-    if (!userRole || (userRole !== "admin" && userRole !== "teacher")) {
+    if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
       Alert({
         title: "Access Denied",
         text: "You need admin or teacher privileges to access this page.",

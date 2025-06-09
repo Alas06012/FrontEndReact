@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import PageNotFound from './Others/PageNotFound';
-import StudentDashboard from './Dashboards/StudentsHome';
+import StudentDashboard from './Dashboards/StudentDashboard';
+import Dashboard from './Dashboards/Dashboard';
 import AdminDashboard from './Dashboards/AdminHome';
 import UsersAdmin from './Dashboards/Admin/UsersAdmin';
 import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
@@ -53,7 +54,7 @@ export default function App() {
 
             {/* Rutas para admin */}
             <Route path="admin">
-              <Route index element={<AdminDashboard />} />
+              <Route index element={<Dashboard />} />
               <Route path="users" element={<UsersAdmin />} />
               <Route path="prompts" element={<Prompts />} />
               <Route path="study_materials" element={<StudyMaterials />} />
@@ -66,13 +67,13 @@ export default function App() {
 
             {/* Rutas para teacher */}
             <Route path="teacher" >
-              <Route index element={<StudentDashboard />} />
+              <Route index element={<Dashboard />} />
               <Route path="materials" element={<StudyMaterials />} />
             </Route>
 
             {/* Rutas para student */}
             <Route path="student" >
-              <Route index element={<StudentDashboard />} />
+              <Route index element={<Dashboard />} />
               <Route path="materials" element={<StudyMaterials />} />
               <Route path="newtest" element={<NewTest />} />
             </Route>
