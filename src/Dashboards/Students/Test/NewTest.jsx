@@ -54,7 +54,7 @@ const Tests = () => {
   const userRole = getUserRole()?.toLowerCase();
 
   useEffect(() => {
-    if (!userRole || (userRole !== "admin" && userRole !== "teacher")) {
+    if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
       Alert({
         title: "Access Denied",
         text: "You need admin or teacher privileges to access this page.",
@@ -607,6 +607,24 @@ const Tests = () => {
 
   const tableColumns = [
     { header: "ID Test", key: "pk_test" },
+    {
+      header: "Created At",
+      key: "created_at",
+      sortable: true,
+      render: (row) => {
+        const date = new Date(row.created_at);
+        const formattedDate = new Intl.DateTimeFormat('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true, // <- esto activa el AM / PM
+        }).format(date);
+        return formattedDate;
+      },
+      sortValue: (row) => new Date(row.created_at).getTime(),
+    },
     { header: "Email", key: "user_email" },
     { header: "Name", key: "user_name" },
     { header: "Lastname", key: "user_lastname" },
@@ -729,7 +747,7 @@ const Tests = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
         <h1 className="text-4xl font-bold text-center mb-10 text-gray-800 tracking-tight">
           Test Management
@@ -789,7 +807,7 @@ const Tests = () => {
           <button
             onClick={() => setShowInstructions(true)}
             disabled={loading}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-xl shadow transition"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
           >
             <Plus className="w-5 h-5" />
             Create Test
@@ -802,7 +820,8 @@ const Tests = () => {
           data={tests}
           loading={loading}
           actionTitle=""
-          className="rounded-md shadow-md overflow-hidden"
+          className="rounded-xl shadow-xl overflow-hidden border border-gray-200"
+          rowClassName="hover:bg-gray-100 transition duration-200"
         />
 
         {/* Pagination */}
