@@ -20,8 +20,8 @@ export function ChartJSLine({ data }) {
   const options = {
     scales: {
       y: {
-        min: 400,
-        max: 700,
+        min: 10,
+        max: 990,
         ticks: {
           stepSize: 100,
         },
