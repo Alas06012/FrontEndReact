@@ -207,7 +207,7 @@ const TitlesAdmin = () => {
       type: 'textarea',
       validation: {
         required: 'Description is required',
-        maxLength: { value: 400, message: 'Maximum 400 characters' },
+        maxLength: { value: 2000, message: 'Maximum 2000 characters' },
       },
     },
     {
@@ -227,7 +227,7 @@ const TitlesAdmin = () => {
       label: 'Title URL',
       type: 'text',
       validation: {
-        maxLength: { value: 200, message: 'Maximum 200 characters' },
+        maxLength: { value: 400, message: 'Maximum 400 characters' },
       },
     }
   ];
