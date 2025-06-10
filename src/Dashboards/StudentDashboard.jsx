@@ -17,6 +17,8 @@ const barData = [
   { level: "B2", value: 25 },
 ];
 
+
+
 const progressData = [
   { name: "1", score: 420 },
   { name: "2", score: 500 },
@@ -74,7 +76,7 @@ function AdminDashboard() {
         </div>
         <Card>
           <CardContent>
-            <h3>Level Distribution</h3>
+            <h3>Level-Distribution</h3>
             <div className="flex justify-around">
               <PieChart width={120} height={120}>
                 <Pie data={pieData} cx="50%" cy="50%" outerRadius={50} dataKey="value">
