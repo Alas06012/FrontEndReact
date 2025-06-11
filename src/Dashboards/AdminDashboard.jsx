@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "../Components/ui/card";
+import Card from "../Components/ui/card";
 import {
   PieChart,
   Pie,
@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Award,
 } from "lucide-react";
+import { useState, useEffect } from "react";
+import Alert from '../Components/Alert'
 
 function AdminDashboard() {
   const [dashboardData] = useState({

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Alert from "../components/Alert.jsx";
+import Alert from "../Components/Alert.jsx";
 import AdminDashboard from "./AdminDashboard.jsx";
 import StudentDashboard from "./StudentDashboard";
 import { getUserRole } from "../Utils/auth.js";
@@ -8,6 +8,7 @@ import { getUserRole } from "../Utils/auth.js";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
+  console.log(role)
 
   useEffect(() => {
     const userRole = getUserRole()?.toLowerCase();
