@@ -750,7 +750,7 @@ const Tests = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
         <h1 className="text-4xl font-bold text-center mb-10 text-gray-800 tracking-tight">
-          Test Management
+          Tests
         </h1>
 
         {/* Filters */}
