@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, LineChart, Line } from "recharts";
 import { AlertCircle, Lightbulb, XCircle } from "lucide-react";
 import React, { useState, useEffect } from "react";
@@ -6,6 +5,7 @@ import Alert from "../Components/Alert";
 import Card from "../Components/ui/card";
 import { API_URL } from "../../config";
 import { ChartJSLine } from "../Components/ui/Charts";
+import { motivationalMessages } from "../utils/motivational-messages"; // Ajusta la ruta según tu estructura
 
 function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -13,53 +13,51 @@ function StudentDashboard() {
   const [error, setError] = useState(null);
 
   const fetchDashboardData = async () => {
-  try {
-    const token = localStorage.getItem("access_token");
-    if (!token) throw new Error("No token found. Please log in.");
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No token found. Please log in.");
 
-    const response = await fetch(`${API_URL}/student-dashboard`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const response = await fetch(`${API_URL}/student-dashboard`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (response.status === 404 && result.data === false) {
-      // Manejamos este caso como "sin actividad"
-      setDashboardData(null);
+      if (response.status === 404 && result.data === false) {
+        setDashboardData(null);
+        setLoading(false);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to fetch dashboard data");
+      }
+
+      setDashboardData(result.data);
+    } catch (err) {
+      setError(err.message);
+      Alert({
+        title: "Error",
+        text: err.message,
+        icon: "error",
+        background: "#4b7af0",
+        color: "white",
+      });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to fetch dashboard data");
-    }
-
-    setDashboardData(result.data);
-  } catch (err) {
-    setError(err.message);
-    Alert({
-      title: "Error",
-      text: err.message,
-      icon: "error",
-      background: "#4b7af0",
-      color: "white",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   if (loading) return <div className="text-center p-6">Loading...</div>;
-  
-  // Mostrar mensaje amigable si el usuario aún no tiene datos
+
   if (!dashboardData) {
     return (
       <main className="p-6">
@@ -70,13 +68,36 @@ function StudentDashboard() {
               Hi there! Your journey hasn't begun.
             </p>
             <p className="text-sm text-yellow-700 max-w-md">
-             Take your first test to start tracking your progress, strengths, and personalized recommendations
+              Take your first test to start tracking your progress, strengths, and personalized recommendations
             </p>
           </div>
         </Card>
       </main>
     );
   }
+
+  // Determinar el sufijo del rank
+  const getRankSuffix = (rank) => {
+    if (rank % 100 >= 11 && rank % 100 <= 13) return "th";
+    switch (rank % 10) {
+      case 1: return "st";
+      case 2: return "nd";
+      case 3: return "rd";
+      default: return "th";
+    }
+  };
+
+  // Seleccionar una frase motivacional aleatoria
+  const getRandomMotivationalMessage = () => {
+    const randomIndex = Math.floor(Math.random() * motivationalMessages.length);
+    return motivationalMessages[randomIndex];
+  };
+
+  // Preparar datos para el gráfico
+  const chartData = dashboardData.test_history.map(item => ({
+    name: item.date,
+    score: item.score,
+  })).reverse(); // Invertir el orden para mostrar de más antiguo a más reciente
 
   return (
     <main className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
@@ -102,7 +123,11 @@ function StudentDashboard() {
         </Card>
 
         <Card title="Your Progress (Last 5 Attempts)" bgColor="bg-blue-50">
-          <ChartJSLine data={dashboardData.test_history || []} />
+          {chartData.length > 0 ? (
+            <ChartJSLine data={chartData} />
+          ) : (
+            <p className="text-center text-gray-500">No data available for chart.</p>
+          )}
         </Card>
 
         <Card
@@ -111,35 +136,35 @@ function StudentDashboard() {
           className="text-center"
         >
           <p className="text-sm text-green-800">
-            Keep pushing forward! Every test brings you closer to your goals.
+            {getRandomMotivationalMessage()}
           </p>
         </Card>
 
         <InfoSection
           icon={<Lightbulb className="w-8 h-8 text-blue-800" />}
           title="Recommendations"
-          items={dashboardData.recommendations}
+          text={dashboardData.recommendations.join(' ')}
           color="blue"
         />
 
         <InfoSection
           icon={<Lightbulb className="w-8 h-8 text-green-800" />}
           title="Strengths"
-          items={dashboardData.strengths}
+          text={dashboardData.strengths.join(' ')}
           color="green"
         />
 
         <InfoSection
           icon={<XCircle className="w-8 h-8 text-red-800" />}
           title="Weaknesses"
-          items={dashboardData.weaknesses}
+          text={dashboardData.weaknesses.join(' ')}
           color="red"
         />
 
         <Card title="Your Rank" bgColor="bg-blue-50" className="text-center">
           <h2 className="text-4xl font-bold text-blue-700">
             {dashboardData.rank}
-            <sup>th</sup>
+            <sup>{getRankSuffix(dashboardData.rank)}</sup>
           </h2>
         </Card>
       </div>
@@ -148,7 +173,7 @@ function StudentDashboard() {
 }
 
 // Reusable section for recommendations, strengths, weaknesses
-function InfoSection({ icon, title, items, color }) {
+function InfoSection({ icon, title, text, color }) {
   return (
     <section
       className={`bg-gradient-to-tr from-${color}-100 to-${color}-50 border border-${color}-300 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-start space-x-6`}
@@ -156,12 +181,8 @@ function InfoSection({ icon, title, items, color }) {
       <div className="flex-shrink-0">{icon}</div>
       <div className="flex-grow">
         <h3 className="text-2xl font-semibold mb-3">{title}</h3>
-        {items?.length > 0 ? (
-          <ul className="list-disc list-inside text-base text-gray-800">
-            {items.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
+        {text ? (
+          <p className="text-base text-gray-800 text-justify">{text}</p>
         ) : (
           <p className="text-sm text-gray-500 italic">No data available.</p>
         )}

@@ -8,7 +8,7 @@ export function ChartJSLine({ data }) {
     labels: data.map((d) => d.name),
     datasets: [
       {
-        label: 'Score',
+        label: 'Your Progress (Last 5 Attempts)', // Etiqueta que aparecerá en la leyenda
         data: data.map((d) => d.score),
         fill: false,
         borderColor: '#1c7ed6',
@@ -25,12 +25,25 @@ export function ChartJSLine({ data }) {
         ticks: {
           stepSize: 100,
         },
+        title: {
+          display: true,
+          text: 'Score', // Etiqueta para el eje Y
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Test Date', // Etiqueta para el eje X
+        },
       },
     },
     responsive: true,
     plugins: {
       legend: {
-        display: false,
+        display: false, 
+      },
+      tooltip: {
+        enabled: true, // Asegurar que los tooltips estén habilitados
       },
     },
   };
