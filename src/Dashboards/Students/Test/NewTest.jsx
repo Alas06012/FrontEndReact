@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../../Components/Alert.jsx";
 import { API_URL } from "../../../../config.js";
@@ -18,6 +18,10 @@ import {
   Edit2,
 } from "lucide-react";
 import Form from "../../../Components/Form.jsx";
+import ViewExamComments from "../../../Components/Test/ViewExamComments.jsx";
+import ViewExamDetails from "../../../Components/Test/ViewExamDetails.jsx";
+import { AnimatePresence, motion } from "framer-motion";
+import { FiEdit3 } from "react-icons/fi";
 
 const Tests = () => {
   const [tests, setTests] = useState([]);
@@ -52,6 +56,40 @@ const Tests = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
+
+  // Comportamiento en telefono de apartado de ver detalles de examen y comentarios
+  // ---------------------------------------------------------------------------
+  const [showMobileComments, setShowMobileComments] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const detailsScrollRef = useRef(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  // Detectar cambios en tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleOpenMobileComments = () => {
+    if (detailsScrollRef.current) {
+      setScrollY(detailsScrollRef.current.scrollTop);
+    }
+    setShowMobileComments(true);
+  };
+
+  const handleCloseMobileComments = () => {
+    setShowMobileComments(false);
+    setTimeout(() => {
+      if (detailsScrollRef.current) {
+        detailsScrollRef.current.scrollTop = scrollY;
+      }
+    }, 50);
+  };
+
+  // ---------------------------------------------------------------------------
 
   useEffect(() => {
     if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
@@ -456,10 +494,10 @@ const Tests = () => {
           prevComments.map((comment) =>
             comment.pk_comment === selectedComment.pk_comment
               ? {
-                  ...comment,
-                  comment_title: data.comment_title,
-                  comment_value: data.comment_value,
-                }
+                ...comment,
+                comment_title: data.comment_title,
+                comment_value: data.comment_value,
+              }
               : comment
           )
         );
@@ -512,6 +550,7 @@ const Tests = () => {
 
       const examData = await examResponse.json();
       setExamDetails(examData.data);
+      console.log(examData.data)
 
       // Fetch comments
       const commentResponse = await fetch(`${API_URL}/test-comments-per-id`, {
@@ -651,11 +690,10 @@ const Tests = () => {
                 handleViewResult(row.pk_test);
               }
             }}
-            className={`text-purple-600 hover:text-purple-800 ${
-              row.status === "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
-            }`}
+            className={`text-purple-600 hover:text-purple-800 ${row.status === "COMPLETED"
+              ? "cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
+              }`}
             title={
               row.status === "COMPLETED"
                 ? "View test result"
@@ -692,11 +730,10 @@ const Tests = () => {
                 handleRetryTest(row.pk_test);
               }
             }}
-            className={`text-red-600 hover:text-red-800 ${
-              row.status !== "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
-            }`}
+            className={`text-red-600 hover:text-red-800 ${row.status !== "COMPLETED"
+              ? "cursor-pointer"
+              : "text-gray-400 cursor-not-allowed"
+              }`}
             title={
               row.status !== "COMPLETED"
                 ? "Retry test"
@@ -733,18 +770,6 @@ const Tests = () => {
       validation: { required: "Comment is required" },
     },
   ];
-
-  // Función para dividir el texto de los speakers en líneas separadas
-  const formatConversation = (text) => {
-    if (!text) return [];
-    // Divide el texto en cada aparición de [SPEAKER_X]
-    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
-    return speakerLines.map((line, index) => (
-      <p key={index} className="mb-1">
-        {line.trim()}
-      </p>
-    ));
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
@@ -825,11 +850,11 @@ const Tests = () => {
         />
 
         {/* Pagination */}
-         <Pagination
-            currentPage={pagination.current_page}
-            totalPages={pagination.total_pages}
-            onPageChange={changePage}
-          />
+        <Pagination
+          currentPage={pagination.current_page}
+          totalPages={pagination.total_pages}
+          onPageChange={changePage}
+        />
 
         {/* Modal for Test Form */}
         <TestFormModal
@@ -984,163 +1009,71 @@ const Tests = () => {
             setShowExamModal(false);
             setIsAddingComment(false);
             setSelectedTestId(null);
-            setSelectedComment(null);
             setExamDetails(null);
-            fetchTests(); // Refresca la tabla al cerrar
+            fetchTests();
           }}
           title={`View Exam and Comments for Test #${selectedTestId}`}
         >
-          <div className="max-h-[80vh] overflow-y-auto p-4 bg-gray-50 rounded-xl shadow-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Exam Details Section */}
-              <div
-                className="p-4 border-r border-gray-200 overflow-y-auto"
-                style={{ maxHeight: "70vh" }}
+          <AnimatePresence>
+            {showExamModal && (
+              <motion.div
+                key="modal-content"
+                className="h-max overflow-y-auto"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
               >
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                  Exam Details
-                </h3>
-                {examDetails ? (
-                  <div className="space-y-6">
-                    {examDetails.map((section, sectionIndex) => (
-                      <div
-                        key={section.section_type}
-                        className={`p-4 rounded-xl shadow-md ${
-                          section.section_type === "READING"
-                            ? "bg-blue-50 border-l-4 border-blue-500"
-                            : "bg-green-50 border-l-4 border-green-500"
-                        } transition duration-300 hover:shadow-lg`}
-                      >
-                        <h4 className="font-bold text-lg mb-4 text-gray-900">
-                          {section.section_desc} ({section.section_type})
-                        </h4>
-                        {section.titles.map((title, titleIndex) => (
-                          <div key={title.title_id} className="mb-6">
-                            <div className="font-semibold text-md mb-3 text-gray-700">
-                              {formatConversation(title.title_test)}
-                            </div>
-                            {title.questions.map((question, questionIndex) => (
-                              <div
-                                key={question.question_id}
-                                className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
-                              >
-                                <p className="font-semibold text-gray-800 mb-2">
-                                  {sectionIndex + 1}.{titleIndex + 1}.
-                                  {questionIndex + 1} {question.question_text}
-                                </p>
-                                <ul className="list-disc pl-5 space-y-1">
-                                  {question.options.map((option) => (
-                                    <li
-                                      key={option.option_id}
-                                      className={`text-gray-700 ${
-                                        question.student_answer?.option_id ===
-                                        option.option_id
-                                          ? "text-blue-600 font-medium"
-                                          : ""
-                                      } ${
-                                        question.correct_answer?.option_id ===
-                                        option.option_id
-                                          ? "text-green-600 font-medium"
-                                          : ""
-                                      }`}
-                                    >
-                                      {option.text}
-                                      {question.student_answer?.option_id ===
-                                        option.option_id && (
-                                        <span className="ml-2 text-blue-600">
-                                          (Student's Answer)
-                                        </span>
-                                      )}
-                                      {question.correct_answer?.option_id ===
-                                        option.option_id && (
-                                        <span className="ml-2 text-green-600">
-                                          (Correct Answer)
-                                        </span>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                {isMobile ? (
+                  showMobileComments ? (
+                    <ViewExamComments
+                      comments={comments}
+                      isAddingComment={isAddingComment}
+                      userRole={userRole}
+                      commentFields={commentFields}
+                      handleAddComment={handleAddComment}
+                      handleEditCommentClick={handleEditCommentClick}
+                      setIsAddingComment={setIsAddingComment}
+                      Form={Form}
+                      onCloseMobile={handleCloseMobileComments}
+                    />
+                  ) : (
+                    <ViewExamDetails
+                      examDetails={examDetails}
+                      scrollRef={detailsScrollRef}
+                      userRole={userRole}
+                    />
+                  )
                 ) : (
-                  <p className="text-gray-600">Loading exam details...</p>
-                )}
-              </div>
-
-              {/* Comments Section */}
-              <div
-                className="p-4 overflow-y-auto"
-                style={{ maxHeight: "70vh" }}
-              >
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                  Comments
-                </h3>
-                {isAddingComment ? (
-                  <div>
-                    <Form
-                      fields={commentFields}
-                      onSubmit={handleAddComment}
-                      onCancel={() => setIsAddingComment(false)}
-                      submitText="Save Comment"
-                      layout="grid-cols-1"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ViewExamDetails
+                      examDetails={examDetails}
+                      userRole={userRole}
+                    />
+                    <ViewExamComments
+                      comments={comments}
+                      isAddingComment={isAddingComment}
+                      userRole={userRole}
+                      commentFields={commentFields}
+                      handleAddComment={handleAddComment}
+                      handleEditCommentClick={handleEditCommentClick}
+                      setIsAddingComment={setIsAddingComment}
+                      Form={Form}
                     />
                   </div>
-                ) : comments.length > 0 ? (
-                  <div className="space-y-4">
-                    {comments.map((comment) => (
-                      <div
-                        key={comment.pk_comment}
-                        className="bg-white p-4 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition duration-300"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold text-lg text-gray-900">
-                              {comment.comment_title}
-                            </h4>
-                            <p className="text-gray-600 mt-2">
-                              {comment.comment_value}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              by {comment.author},{" "}
-                              {new Date(comment.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleEditCommentClick(comment)}
-                            className="text-blue-600 hover:text-blue-800 ml-4 transition duration-200"
-                            title="Edit Comment"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setIsAddingComment(true)}
-                      className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
-                    >
-                      Add New Comment
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-gray-600 mb-4">No comments available.</p>
-                    <button
-                      onClick={() => setIsAddingComment(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
-                    >
-                      Add Comment
-                    </button>
-                  </div>
                 )}
-              </div>
-            </div>
-          </div>
+
+                {isMobile && !showMobileComments && (
+                  <button
+                    onClick={handleOpenMobileComments}
+                    className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition z-50"
+                  >
+                    <FiEdit3 className="h-7 w-7" />
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Modal>
 
         {/* Modal for Editing Comments */}
@@ -1150,7 +1083,7 @@ const Tests = () => {
             setShowEditCommentModal(false);
             setSelectedComment(null);
           }}
-          title={`Edit Comment for Test #${selectedTestId}`}
+          title={`Edit Comment for Test`}
         >
           <div className="max-h-[80vh] overflow-y-auto">
             {selectedComment && (
@@ -1173,6 +1106,8 @@ const Tests = () => {
             )}
           </div>
         </Modal>
+
+
       </div>
       {isLoading && (
         <div className="fixed inset-0 bg-opacity-80 z-50 flex items-center justify-center">
