@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+
+import React, { useState, useEffect, useMemo,useRef } from 'react';
 import Modal from '../Components/Modal.jsx';
 import Alert from '../Components/Alert.jsx';
 
@@ -35,7 +36,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
     const [currentPage, setCurrentPage] = useState(0);
     const [responses, setResponses] = useState({});
     const [timeLeft, setTimeLeft] = useState(initialTime);
-
+    const questionTopRef = useRef(null);
     const allTitlesWithSection = useMemo(() => {
         if (!testData?.sections) return [];
 
@@ -89,7 +90,14 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
     };
 
     const handleNext = () => {
-        if (currentPage < totalPages - 1) setCurrentPage(currentPage + 1);
+       if (currentPage < totalPages - 1) {
+        setCurrentPage(prev => {
+            setTimeout(() => {
+                questionTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 0);
+            return prev + 1;
+        });
+    }
     };
 
     const handlePrev = () => {
@@ -145,7 +153,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
         >
             <div className="flex h-[80vh] gap-4 p-4 overflow-hidden">
                 <div className="flex-1 overflow-y-auto pr-2 border-r">
-                    <form onSubmit={handleSubmit} className="space-y-10">
+                    <form onSubmit={handleSubmit} className="space-y-10"  ref={questionTopRef}>
                         <div className="border-b border-gray-300 pb-2">
                             <h3 className="text-xl text-gray-600 font-bold tracking-wide uppercase">
                                 {currentTitle.section_desc} ({currentTitle.section_type})
@@ -161,9 +169,9 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                                 <audio controls src={currentTitle.title_url} className="w-full my-3 rounded shadow" />
                             )}
 
-                            <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
+                            {/*   <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
                                 {currentTitle.title_test}
-                            </pre>
+                            </pre> */}
 
                             {currentTitle.questions.map((question, qIndex) => {
                                 const globalQuestionNumber = allTitlesWithSection
