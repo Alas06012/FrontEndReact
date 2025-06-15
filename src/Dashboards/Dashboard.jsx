@@ -8,7 +8,6 @@ import { getUserRole } from "../Utils/auth.js";
 const Dashboard = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
-  console.log(role)
 
   useEffect(() => {
     const userRole = getUserRole()?.toLowerCase();
