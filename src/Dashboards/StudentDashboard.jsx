@@ -5,7 +5,7 @@ import Alert from "../Components/Alert";
 import Card from "../Components/ui/card";
 import { API_URL } from "../../config";
 import { ChartJSLine } from "../Components/ui/Charts";
-import { motivationalMessages } from "../utils/motivational-messages"; // Ajusta la ruta según tu estructura
+import { motivationalMessages } from "../Utils/motivational-messages"; 
 
 function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
