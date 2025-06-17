@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import Alert from '../../components/Alert.jsx';
+import Alert from '../../Components/Alert.jsx';
 import { API_URL } from '/config.js';
 import { getUserRole } from '../../Utils/auth.js';
 import { User, Edit, XCircle, CheckCircle, Search, Plus } from 'lucide-react';
