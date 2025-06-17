@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../../Components/Alert.jsx";
 import { API_URL } from "../../../../config.js";
@@ -9,15 +9,18 @@ import Modal from "../../../Components/Modal.jsx";
 import Pagination from "../../../Components/Pagination.jsx";
 import TestFormModal from "../../../Components/TestFormModal.jsx";
 import TestResultModal from "../../../Components/Test/TestResultModal.jsx";
-import {
-  Eye,
-  MessageCircle,
-  MessageSquarePlus,
-  RotateCcw,
-  BarChart2,
-  Edit2,
-} from "lucide-react";
+import { Eye, MessageCircle, MessageSquarePlus, RotateCcw, BarChart2, Edit2 } from "lucide-react";
 import Form from "../../../Components/Form.jsx";
+import ViewExamComments from "../../../Components/Test/ViewExamComments.jsx";
+import ViewExamDetails from "../../../Components/Test/ViewExamDetails.jsx";
+import { AnimatePresence, motion } from "framer-motion";
+import { FiEdit3 } from "react-icons/fi";
+import ToeicInstructionsModal from "../../../Components/Test/ToeicInstructionsModal.jsx";
+import ToeicFilters from "../../../Components/Test/ToeicFilters.jsx";
+import StatusBadge from "../../../Components/StatusBadge.jsx";
+import ActionButton from "../../../Components/ActionButton.jsx";
+import TestResult from "../../../Components/TestResult.jsx";
+
 
 const Tests = () => {
   const [tests, setTests] = useState([]);
@@ -38,6 +41,8 @@ const Tests = () => {
     user_name: "",
     user_lastname: "",
     level_name: "",
+    start_date: "",  // Nuevo campo
+    end_date: ""     // Nuevo campo
   });
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -52,6 +57,40 @@ const Tests = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
+
+  // Comportamiento en telefono de apartado de ver detalles de examen y comentarios
+  // ---------------------------------------------------------------------------
+  const [showMobileComments, setShowMobileComments] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const detailsScrollRef = useRef(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  // Detectar cambios en tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const handleOpenMobileComments = () => {
+    if (detailsScrollRef.current) {
+      setScrollY(detailsScrollRef.current.scrollTop);
+    }
+    setShowMobileComments(true);
+  };
+
+  const handleCloseMobileComments = () => {
+    setShowMobileComments(false);
+    setTimeout(() => {
+      if (detailsScrollRef.current) {
+        detailsScrollRef.current.scrollTop = scrollY;
+      }
+    }, 50);
+  };
+
+  // ---------------------------------------------------------------------------
 
   useEffect(() => {
     if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
@@ -93,13 +132,37 @@ const Tests = () => {
     }));
   };
 
-  const fetchTests = async (page = 1, per_page = perPage) => {
+  /**LIMPIAR FILTROS 
+   * ----------------------------------------------------------- */
+
+  const [filtersCleared, setFiltersCleared] = useState(0); // Usamos un contador
+
+  const handleClearFilters = () => {
+    setFilters({
+      user_email: "",
+      user_name: "",
+      user_lastname: "",
+      level_name: "",
+      start_date: "",
+      end_date: ""
+    });
+    setFiltersCleared(prev => prev + 1); // Incrementamos el contador
+  };
+
+  useEffect(() => {
+    if (filtersCleared > 0) { // Solo ejecutar si el contador > 0
+      fetchTests(1, perPage);
+    }
+  }, [filtersCleared]);
+  /** ----------------------------------------------------------- */
+
+  const fetchTests = async (page = 1, per_page = perPage, activeFilters = filters) => {
     setLoading(true);
     try {
       const body = {
         page,
         per_page,
-        ...filters,
+        ...activeFilters
       };
 
       const response = await fetch(`${API_URL}/all-tests`, {
@@ -113,6 +176,7 @@ const Tests = () => {
 
       if (response.ok) {
         const data = await response.json();
+
         const testsWithComments = await Promise.all(
           data.tests.map(async (test) => {
             const commentResponse = await fetch(
@@ -456,10 +520,10 @@ const Tests = () => {
           prevComments.map((comment) =>
             comment.pk_comment === selectedComment.pk_comment
               ? {
-                  ...comment,
-                  comment_title: data.comment_title,
-                  comment_value: data.comment_value,
-                }
+                ...comment,
+                comment_title: data.comment_title,
+                comment_value: data.comment_value,
+              }
               : comment
           )
         );
@@ -605,110 +669,111 @@ const Tests = () => {
     fetchTests(1, newPerPage);
   };
 
+
+  /**DEFINICION DE COLUMNAS DE TABLA DE TESTS
+   * ---------------------------------------------------
+   */
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'UTC'
+    }).format(date);
+  };
+  // Columnas de la tabla (versión simplificada sin Tooltip)
   const tableColumns = [
-    { header: "ID Test", key: "pk_test" },
     {
-      header: "Created At",
+      header: "ID Test",
+      key: "pk_test",
+      width: 'w-24'
+    },
+    {
+      header: "Fecha Creación",
       key: "created_at",
       sortable: true,
-      render: (row) => {
-        const date = new Date(row.created_at);
-        const formattedDate = new Intl.DateTimeFormat('es-ES', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true, // <- esto activa el AM / PM
-        }).format(date);
-        return formattedDate;
-      },
+      render: (row) => formatDate(row.created_at),
       sortValue: (row) => new Date(row.created_at).getTime(),
-    },
-    { header: "Email", key: "user_email" },
-    { header: "Name", key: "user_name" },
-    { header: "Lastname", key: "user_lastname" },
-    { header: "Level", key: "level_name" },
-    { header: "Status", key: "status" },
-    {
-      header: "Passed",
-      key: "test_passed",
-      render: (row) => {
-        if (row.test_passed === 1) return "Aprobado";
-        if (row.test_passed === 0) return "Reprobado";
-        return "Pendiente";
-      },
+      width: 'w-40'
     },
     {
-      header: "Actions",
-      key: "actions",
+      header: "Email",
+      key: "user_email",
       render: (row) => (
-        <div className="flex items-center gap-3">
-          {/* Ver resultado */}
-          <button
-            onClick={() => {
-              if (row.status === "COMPLETED") {
-                handleViewResult(row.pk_test);
-              }
-            }}
-            className={`text-purple-600 hover:text-purple-800 ${
-              row.status === "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
-            }`}
-            title={
-              row.status === "COMPLETED"
-                ? "View test result"
-                : "Result not available"
-            }
-          >
-            <BarChart2 className="w-5 h-5" />
-          </button>
+        <a
+          href={`mailto:${row.user_email}`}
+          className="text-blue-600 hover:underline"
+          title={`Enviar email a ${row.user_email}`}
+        >
+          {row.user_email}
+        </a>
+      )
+    },
+    {
+      header: "Nombre",
+      key: "user_name",
+      render: (row) => `${row.user_name} ${row.user_lastname}`
+    },
+    {
+      header: "Nivel",
+      key: "level_name",
+      render: (row) => (
+        <span className="capitalize">
+          {row.level_name?.toLowerCase() || 'N/A'}
+        </span>
+      )
+    },
+    {
+      header: "Estado",
+      key: "status",
+      render: (row) => <StatusBadge status={row.status} />,
+      sortValue: (row) => row.status
+    },
+    {
+      header: "Resultado",
+      key: "test_passed",
+      render: (row) => <TestResult passed={row.test_passed} />,
+      sortValue: (row) => row.test_passed
+    },
+    {
+      header: "Acciones",
+      key: "actions",
+      width: 'w-32',
+      render: (row) => (
+        <div className="flex items-center justify-center gap-2">
+          <ActionButton
+            icon={BarChart2}
+            color="info"
+            disabled={row.status !== "COMPLETED"}
+            onClick={() => row.status === "COMPLETED" && handleViewResult(row.pk_test)}
+            tooltip={row.status === "COMPLETED" ? "Ver resultados" : "Resultado no disponible"}
+          />
 
-          {/* Ver examen y comentarios */}
-          <button
+          <ActionButton
+            icon={Eye}
+            color="primary"
             onClick={() => fetchExamAndComments(row.pk_test)}
-            className="text-blue-600 hover:text-blue-800 cursor-pointer"
-            title="View Exam and Comments"
-          >
-            <Eye className="w-5 h-5" />
-          </button>
+            tooltip="Ver examen y comentarios"
+          />
 
-          {/* Agregar comentario */}
-          {/**
-           * <button
-            onClick={() => handleAddCommentClick(row.pk_test)}
-            className="text-green-600 hover:text-green-800 cursor-pointer"
-            title="Add Comment"
-          >
-            <MessageSquarePlus className="w-5 h-5" />
-          </button>
-           */}
-
-          {/* Reintentar test */}
-          <button
-            onClick={() => {
-              if (row.status !== "COMPLETED") {
-                handleRetryTest(row.pk_test);
-              }
-            }}
-            className={`text-red-600 hover:text-red-800 ${
-              row.status !== "COMPLETED"
-                ? "cursor-pointer"
-                : "text-gray-400 cursor-not-allowed"
-            }`}
-            title={
-              row.status !== "COMPLETED"
-                ? "Retry test"
-                : "Cannot retry completed test"
-            }
-          >
-            <RotateCcw className="w-5 h-5" />
-          </button>
+          <ActionButton
+            icon={RotateCcw}
+            color="danger"
+            disabled={row.status === "COMPLETED"}
+            onClick={() => row.status !== "COMPLETED" && handleRetryTest(row.pk_test)}
+            tooltip={row.status !== "COMPLETED" ? "Reintentar test" : "No se puede reintentar"}
+          />
         </div>
       ),
     },
   ];
+  /**
+   * ---------------------------------------------------
+   */
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -734,18 +799,6 @@ const Tests = () => {
     },
   ];
 
-  // Función para dividir el texto de los speakers en líneas separadas
-  const formatConversation = (text) => {
-    if (!text) return [];
-    // Divide el texto en cada aparición de [SPEAKER_X]
-    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
-    return speakerLines.map((line, index) => (
-      <p key={index} className="mb-1">
-        {line.trim()}
-      </p>
-    ));
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
@@ -753,66 +806,15 @@ const Tests = () => {
           Tests
         </h1>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <input
-            type="text"
-            name="user_email"
-            placeholder="Email"
-            value={filters.user_email}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <input
-            type="text"
-            name="user_name"
-            placeholder="First Name"
-            value={filters.user_name}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <input
-            type="text"
-            name="user_lastname"
-            placeholder="Last Name"
-            value={filters.user_lastname}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <select
-            name="level_name"
-            value={filters.level_name}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="">All Levels</option>
-            {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10">
-          <button
-            onClick={applyFilters}
-            disabled={loading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl shadow transition"
-          >
-            Apply Filters
-          </button>
-
-          <button
-            onClick={() => setShowInstructions(true)}
-            disabled={loading}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            <Plus className="w-5 h-5" />
-            Create Test
-          </button>
-        </div>
+        {/* Filters */} {/* Buttons */}
+        <ToeicFilters
+          filters={filters}
+          loading={loading}
+          onFilterChange={handleFilterChange}
+          onApplyFilters={applyFilters}
+          onCreateTest={() => setShowInstructions(true)}
+          onClearFilters={handleClearFilters}
+        />
 
         {/* Table */}
         <Table
@@ -825,11 +827,11 @@ const Tests = () => {
         />
 
         {/* Pagination */}
-         <Pagination
-            currentPage={pagination.current_page}
-            totalPages={pagination.total_pages}
-            onPageChange={changePage}
-          />
+        <Pagination
+          currentPage={pagination.current_page}
+          totalPages={pagination.total_pages}
+          onPageChange={changePage}
+        />
 
         {/* Modal for Test Form */}
         <TestFormModal
@@ -842,133 +844,11 @@ const Tests = () => {
         />
 
         {/* Modal for Instructions */}
-        {showInstructions && (
-          <Modal
-            isOpen={showInstructions}
-            onClose={() => setShowInstructions(false)}
-          >
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">
-                TOEIC Test Instructions / Instrucciones TOEIC
-              </h2>
-
-              <div className="w-full flex justify-end mb-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="lang-toggle"
-                    checked={filters.language === "es"}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        language: e.target.checked ? "es" : "en",
-                      }))
-                    }
-                    className="w-5 h-5"
-                  />
-                  <label
-                    htmlFor="lang-toggle"
-                    className="select-none text-gray-700"
-                  >
-                    {filters.language === "es" ? "Español" : "English"}
-                  </label>
-                </div>
-              </div>
-
-              {filters.language === "es" ? (
-                <ul className="list-disc pl-5 text-gray-700 space-y-2">
-                  <li>
-                    El examen TOEIC Online Listening and Reading dura 2 horas
-                    (120 minutos): 50 preguntas de Listening y 50 de Reading.
-                  </li>
-                  <li>
-                    Responde cuidadosamente las 100 preguntas de opción
-                    múltiple.
-                  </li>
-                  <li>
-                    Es indispensable tener una conexión estable a internet
-                    durante todo el examen.
-                  </li>
-                  <li>
-                    Usa un ambiente silencioso y sin distracciones para asegurar
-                    tu concentración.
-                  </li>
-                  <li>
-                    Una vez enviado el examen, no podrás modificar tus
-                    respuestas.
-                  </li>
-                  <li>
-                    No está permitido usar ayudas o dispositivos no autorizados
-                    durante el examen.
-                  </li>
-                  <li>
-                    Es importante contestar todas las preguntas, de lo contrario
-                    no obtendrás un buen resultado.
-                  </li>
-                  <li>
-                    Solo dispones de tres (3) intentos por día para realizar el
-                    examen.
-                  </li>
-                  <li>
-                    Si cierras el examen antes de completarlo, se consumirá un
-                    intento y tus respuestas no serán enviadas ni evaluadas.
-                  </li>
-                </ul>
-              ) : (
-                <ul className="list-disc pl-5 text-gray-700 space-y-2">
-                  <li>
-                    The TOEIC Online Listening and Reading test lasts 2 hours
-                    (120 minutes): 50 Listening questions and 50 Reading
-                    questions.
-                  </li>
-                  <li>Carefully answer all 100 multiple-choice questions.</li>
-                  <li>
-                    A stable internet connection throughout the test is
-                    essential.
-                  </li>
-                  <li>
-                    Use a quiet environment free of distractions to ensure
-                    focus.
-                  </li>
-                  <li>
-                    Once the test is submitted, you cannot change your answers.
-                  </li>
-                  <li>
-                    No unauthorized aids or devices are allowed during the exam.
-                  </li>
-                  <li>
-                    It is important to answer all questions; otherwise, you will
-                    not achieve a good result.
-                  </li>
-                  <li>You are allowed only three (3) test attempts per day.</li>
-                  <li>
-                    If you close the test without completing it, one attempt
-                    will be consumed and your answers will not be submitted or
-                    evaluated.
-                  </li>
-                </ul>
-              )}
-
-              <div className="mt-6 flex justify-end gap-4">
-                <button
-                  onClick={() => setShowInstructions(false)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-xl"
-                >
-                  {filters.language === "es" ? "Cancelar" : "Cancel"}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowInstructions(false);
-                    createTest();
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl"
-                >
-                  {filters.language === "es" ? "Continuar" : "Continue"}
-                </button>
-              </div>
-            </div>
-          </Modal>
-        )}
+        <ToeicInstructionsModal
+          isOpen={showInstructions}
+          onClose={() => setShowInstructions(false)}
+          onCreateTest={createTest}
+        />
 
         {/* Modal for Test Result */}
         <TestResultModal
@@ -984,163 +864,71 @@ const Tests = () => {
             setShowExamModal(false);
             setIsAddingComment(false);
             setSelectedTestId(null);
-            setSelectedComment(null);
             setExamDetails(null);
-            fetchTests(); // Refresca la tabla al cerrar
+            fetchTests();
           }}
-          title={`View Exam and Comments for Test #${selectedTestId}`}
+          title={`View Exam and Comments`}
         >
-          <div className="max-h-[80vh] overflow-y-auto p-4 bg-gray-50 rounded-xl shadow-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Exam Details Section */}
-              <div
-                className="p-4 border-r border-gray-200 overflow-y-auto"
-                style={{ maxHeight: "70vh" }}
+          <AnimatePresence>
+            {showExamModal && (
+              <motion.div
+                key="modal-content"
+                className="h-max overflow-y-auto"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
               >
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                  Exam Details
-                </h3>
-                {examDetails ? (
-                  <div className="space-y-6">
-                    {examDetails.map((section, sectionIndex) => (
-                      <div
-                        key={section.section_type}
-                        className={`p-4 rounded-xl shadow-md ${
-                          section.section_type === "READING"
-                            ? "bg-blue-50 border-l-4 border-blue-500"
-                            : "bg-green-50 border-l-4 border-green-500"
-                        } transition duration-300 hover:shadow-lg`}
-                      >
-                        <h4 className="font-bold text-lg mb-4 text-gray-900">
-                          {section.section_desc} ({section.section_type})
-                        </h4>
-                        {section.titles.map((title, titleIndex) => (
-                          <div key={title.title_id} className="mb-6">
-                            <div className="font-semibold text-md mb-3 text-gray-700">
-                              {formatConversation(title.title_test)}
-                            </div>
-                            {title.questions.map((question, questionIndex) => (
-                              <div
-                                key={question.question_id}
-                                className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
-                              >
-                                <p className="font-semibold text-gray-800 mb-2">
-                                  {sectionIndex + 1}.{titleIndex + 1}.
-                                  {questionIndex + 1} {question.question_text}
-                                </p>
-                                <ul className="list-disc pl-5 space-y-1">
-                                  {question.options.map((option) => (
-                                    <li
-                                      key={option.option_id}
-                                      className={`text-gray-700 ${
-                                        question.student_answer?.option_id ===
-                                        option.option_id
-                                          ? "text-blue-600 font-medium"
-                                          : ""
-                                      } ${
-                                        question.correct_answer?.option_id ===
-                                        option.option_id
-                                          ? "text-green-600 font-medium"
-                                          : ""
-                                      }`}
-                                    >
-                                      {option.text}
-                                      {question.student_answer?.option_id ===
-                                        option.option_id && (
-                                        <span className="ml-2 text-blue-600">
-                                          (Student's Answer)
-                                        </span>
-                                      )}
-                                      {question.correct_answer?.option_id ===
-                                        option.option_id && (
-                                        <span className="ml-2 text-green-600">
-                                          (Correct Answer)
-                                        </span>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
+                {isMobile ? (
+                  showMobileComments ? (
+                    <ViewExamComments
+                      comments={comments}
+                      isAddingComment={isAddingComment}
+                      userRole={userRole}
+                      commentFields={commentFields}
+                      handleAddComment={handleAddComment}
+                      handleEditCommentClick={handleEditCommentClick}
+                      setIsAddingComment={setIsAddingComment}
+                      Form={Form}
+                      onCloseMobile={handleCloseMobileComments}
+                    />
+                  ) : (
+                    <ViewExamDetails
+                      initialExamDetails={examDetails}
+                      scrollRef={detailsScrollRef}
+                      userRole={userRole}
+                    />
+                  )
                 ) : (
-                  <p className="text-gray-600">Loading exam details...</p>
-                )}
-              </div>
-
-              {/* Comments Section */}
-              <div
-                className="p-4 overflow-y-auto"
-                style={{ maxHeight: "70vh" }}
-              >
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                  Comments
-                </h3>
-                {isAddingComment ? (
-                  <div>
-                    <Form
-                      fields={commentFields}
-                      onSubmit={handleAddComment}
-                      onCancel={() => setIsAddingComment(false)}
-                      submitText="Save Comment"
-                      layout="grid-cols-1"
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ViewExamDetails
+                      initialExamDetails={examDetails}
+                      userRole={userRole}
+                    />
+                    <ViewExamComments
+                      comments={comments}
+                      isAddingComment={isAddingComment}
+                      userRole={userRole}
+                      commentFields={commentFields}
+                      handleAddComment={handleAddComment}
+                      handleEditCommentClick={handleEditCommentClick}
+                      setIsAddingComment={setIsAddingComment}
+                      Form={Form}
                     />
                   </div>
-                ) : comments.length > 0 ? (
-                  <div className="space-y-4">
-                    {comments.map((comment) => (
-                      <div
-                        key={comment.pk_comment}
-                        className="bg-white p-4 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition duration-300"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold text-lg text-gray-900">
-                              {comment.comment_title}
-                            </h4>
-                            <p className="text-gray-600 mt-2">
-                              {comment.comment_value}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              by {comment.author},{" "}
-                              {new Date(comment.created_at).toLocaleString()}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleEditCommentClick(comment)}
-                            className="text-blue-600 hover:text-blue-800 ml-4 transition duration-200"
-                            title="Edit Comment"
-                          >
-                            <Edit2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setIsAddingComment(true)}
-                      className="mt-4 bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
-                    >
-                      Add New Comment
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-gray-600 mb-4">No comments available.</p>
-                    <button
-                      onClick={() => setIsAddingComment(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition duration-300 hover:scale-105"
-                    >
-                      Add Comment
-                    </button>
-                  </div>
                 )}
-              </div>
-            </div>
-          </div>
+
+                {isMobile && !showMobileComments && (
+                  <button
+                    onClick={handleOpenMobileComments}
+                    className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition z-50"
+                  >
+                    <FiEdit3 className="h-7 w-7" />
+                  </button>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Modal>
 
         {/* Modal for Editing Comments */}
@@ -1150,7 +938,7 @@ const Tests = () => {
             setShowEditCommentModal(false);
             setSelectedComment(null);
           }}
-          title={`Edit Comment for Test #${selectedTestId}`}
+          title={`Edit Comment for Test`}
         >
           <div className="max-h-[80vh] overflow-y-auto">
             {selectedComment && (
@@ -1173,6 +961,8 @@ const Tests = () => {
             )}
           </div>
         </Modal>
+
+
       </div>
       {isLoading && (
         <div className="fixed inset-0 bg-opacity-80 z-50 flex items-center justify-center">

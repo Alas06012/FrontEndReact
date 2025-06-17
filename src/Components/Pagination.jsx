@@ -1,13 +1,13 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  onPageChange, 
-  perPage, 
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+  perPage,
   onPerPageChange,
-  maxVisiblePages = 5 
+  maxVisiblePages = 5
 }) => {
   // Calcular páginas visibles
   const getVisiblePages = () => {
@@ -50,7 +50,7 @@ const Pagination = ({
     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
       {/* Mostrar rango de registros */}
       <div className="text-sm text-gray-600">
-        Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, currentPage * perPage)} of {totalPages * perPage} entries
+        Showing {(currentPage - 1) * perPage + 1} to {Math.min(currentPage * perPage, totalPages * perPage)} of {totalPages * perPage} entries
       </div>
 
       {/* Controles de paginación */}

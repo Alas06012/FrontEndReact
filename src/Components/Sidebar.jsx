@@ -224,6 +224,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                 </NavLink>
                                 
                             </li>
+                            <li>
+                                <NavLink to="/dashboard/student/studyhome" className={navLinkClass}>
+                                    <FiBook className="w-5 h-5" />
+                                    <span className="ml-3">Study Materials</span>
+                                </NavLink>
+                                
+                            </li>
                         </>
                     )}
                 </ul>
