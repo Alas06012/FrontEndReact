@@ -235,7 +235,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
         {loadingComments[questionId] ? (
           <LoadingSpinner text="Generando análisis..." />
         ) : (
-          'Consultar razones de la respuesta'
+          'Realizar análisis con IA'
         )}
       </button>
     );
