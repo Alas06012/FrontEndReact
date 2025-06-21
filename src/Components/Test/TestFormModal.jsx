@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useMemo,useRef } from 'react';
-import Modal from '../Components/Modal.jsx';
-import Alert from '../Components/Alert.jsx';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Modal from '../Modal.jsx';
+import Alert from '../Alert.jsx';
 
 const Timer = ({ timeLeft, totalTime }) => {
     const percentage = (timeLeft / totalTime) * 100;
@@ -37,6 +37,14 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
     const [responses, setResponses] = useState({});
     const [timeLeft, setTimeLeft] = useState(initialTime);
     const questionTopRef = useRef(null);
+    useEffect(() => {
+        if (isOpen && testData) {
+            setCurrentPage(0);              // Reinicia a la primera página
+            setResponses({});               // Limpia respuestas anteriores
+            setTimeLeft(initialTime);       // Reinicia el temporizador
+        }
+    }, [testData?.test_id, isOpen]);
+
     const allTitlesWithSection = useMemo(() => {
         if (!testData?.sections) return [];
 
@@ -90,14 +98,14 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
     };
 
     const handleNext = () => {
-       if (currentPage < totalPages - 1) {
-        setCurrentPage(prev => {
-            setTimeout(() => {
-                questionTopRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 0);
-            return prev + 1;
-        });
-    }
+        if (currentPage < totalPages - 1) {
+            setCurrentPage(prev => {
+                setTimeout(() => {
+                    questionTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 0);
+                return prev + 1;
+            });
+        }
     };
 
     const handlePrev = () => {
@@ -151,9 +159,10 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
             size="5xl"
             height="95vh"
         >
-            <div className="flex h-[80vh] gap-4 p-4 overflow-hidden">
+          <div className="flex flex-col lg:flex-row h-auto lg:h-[80vh] gap-4 p-4 overflow-auto">
                 <div className="flex-1 overflow-y-auto pr-2 border-r">
-                    <form onSubmit={handleSubmit} className="space-y-10"  ref={questionTopRef}>
+                   <form onSubmit={handleSubmit} className="space-y-10 px-1 sm:px-2 md:px-4" ref={questionTopRef}>
+
                         <div className="border-b border-gray-300 pb-2">
                             <h3 className="text-xl text-gray-600 font-bold tracking-wide uppercase">
                                 {currentTitle.section_desc} ({currentTitle.section_type})
@@ -161,14 +170,18 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                         </div>
 
                         <div className="space-y-6">
-                            <h4 className="text-2xl font-semibold text-blue-700 leading-snug">
+                            <h4 className="text-xl sm:text-2xl font-semibold text-blue-700 leading-snug">
                                 {currentTitle.title_name}
                             </h4>
 
                             {currentTitle.title_url && (
                                 <audio controls src={currentTitle.title_url} className="w-full my-3 rounded shadow" />
                             )}
-
+                            {currentTitle.section_type !== 'LISTENING' && currentTitle.title_test && (
+                                <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
+                                    {currentTitle.title_test}
+                                </pre>
+                            )}
                             {/*   <pre className="bg-blue-50 p-4 rounded-xl text-gray-800 whitespace-pre-wrap font-medium shadow-sm border border-blue-100">
                                 {currentTitle.title_test}
                             </pre> */}
@@ -189,7 +202,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                                             }
                                         </p>
 
-                                        <p className="font-semibold text-gray-800 text-lg mb-3">{question.question_text}</p>
+                                       <p className="text-base sm:text-lg font-semibold text-gray-800 mb-3">{question.question_text}</p>
 
                                         <div className="space-y-2">
                                             {question.answers.map((answer) => (
@@ -223,7 +236,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                                 type="button"
                                 onClick={handlePrev}
                                 disabled={currentPage === 0}
-                                className={`px-5 py-2.5 rounded-xl font-semibold transition
+                                className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold transition
                                     ${currentPage === 0
                                         ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                                         : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -235,7 +248,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                             {currentPage === totalPages - 1 ? (
                                 <button
                                     type="submit"
-                                    className="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition"
+                                    className="w-full sm:w-auto  px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition"
                                 >
                                     Enviar respuestas
                                 </button>
@@ -243,7 +256,7 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                                 <button
                                     type="button"
                                     onClick={handleNext}
-                                    className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
+                                    className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition"
                                 >
                                     Siguiente
                                 </button>
@@ -252,11 +265,14 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                     </form>
                 </div>
 
-                <div className="w-64 flex flex-col">
+             <div className="w-full lg:w-64 flex flex-col mt-6 lg:mt-0">
                     {testStarted && <Timer timeLeft={timeLeft} totalTime={initialTime} />}
 
                     <div className="text-sm text-gray-600 font-semibold mb-2">Progreso por pregunta</div>
-                    <div className="grid grid-cols-5 gap-2 overflow-y-auto h-full pr-1">
+                    {/* <div className="grid grid-cols-5 gap-2 overflow-y-auto h-full pr-1"> */}
+
+                    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2 overflow-y-auto max-h-64 lg:max-h-full pr-1">
+
                         {allTitlesWithSection.flatMap((title, titleIndex) =>
                             title.questions.map((question, qIndex) => {
                                 const questionNumber = allTitlesWithSection

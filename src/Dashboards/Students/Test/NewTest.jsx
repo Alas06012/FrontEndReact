@@ -3,21 +3,27 @@ import { useNavigate } from "react-router-dom";
 import Alert from "../../../Components/Alert.jsx";
 import { API_URL } from "../../../../config.js";
 import { getUserRole } from "../../../Utils/auth.js";
-import { Plus } from "lucide-react";
 import Table from "../../../Components/Table.jsx";
 import Modal from "../../../Components/Modal.jsx";
 import Pagination from "../../../Components/Pagination.jsx";
-import TestFormModal from "../../../Components/TestFormModal.jsx";
+import TestFormModal from "../../../Components/Test/TestFormModal.jsx";
 import TestResultModal from "../../../Components/Test/TestResultModal.jsx";
 import {
+  Plus,
   Eye,
+  Filter,
   MessageCircle,
   MessageSquarePlus,
+  FileSpreadsheet,
+  FileDown,
   RotateCcw,
   BarChart2,
   Edit2,
+  Trash
 } from "lucide-react";
 import Form from "../../../Components/Form.jsx";
+import { exportToExcel, exportToPDF } from '../../../Utils/exportUtils.js';
+
 
 const Tests = () => {
   const [tests, setTests] = useState([]);
@@ -33,12 +39,7 @@ const Tests = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultData, setResultData] = useState(null);
-  const [filters, setFilters] = useState({
-    user_email: "",
-    user_name: "",
-    user_lastname: "",
-    level_name: "",
-  });
+
 
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsData, setDetailsData] = useState(null);
@@ -52,6 +53,19 @@ const Tests = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const userRole = getUserRole()?.toLowerCase();
+const defaultFilters = {
+  user_email: "",
+  user_name: "",
+  user_lastname: "",
+  level_name: "",
+};
+const [filters, setFilters] = useState(defaultFilters);
+const clearFilters = () => {
+  setFilters(defaultFilters);
+}
+useEffect(() => {
+  applyFilters();
+}, [filters]);
 
   useEffect(() => {
     if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
@@ -456,10 +470,10 @@ const Tests = () => {
           prevComments.map((comment) =>
             comment.pk_comment === selectedComment.pk_comment
               ? {
-                  ...comment,
-                  comment_title: data.comment_title,
-                  comment_value: data.comment_value,
-                }
+                ...comment,
+                comment_title: data.comment_title,
+                comment_value: data.comment_value,
+              }
               : comment
           )
         );
@@ -651,11 +665,10 @@ const Tests = () => {
                 handleViewResult(row.pk_test);
               }
             }}
-            className={`text-purple-600 hover:text-purple-800 ${
-              row.status === "COMPLETED"
+            className={`text-purple-600 hover:text-purple-800 ${row.status === "COMPLETED"
                 ? "cursor-pointer"
                 : "text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
             title={
               row.status === "COMPLETED"
                 ? "View test result"
@@ -692,11 +705,10 @@ const Tests = () => {
                 handleRetryTest(row.pk_test);
               }
             }}
-            className={`text-red-600 hover:text-red-800 ${
-              row.status !== "COMPLETED"
+            className={`text-red-600 hover:text-red-800 ${row.status !== "COMPLETED"
                 ? "cursor-pointer"
                 : "text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
             title={
               row.status !== "COMPLETED"
                 ? "Retry test"
@@ -749,87 +761,127 @@ const Tests = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
-        <h1 className="text-4xl font-bold text-center mb-10 text-gray-800 tracking-tight">
-          Test Management
-        </h1>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <input
-            type="text"
-            name="user_email"
-            placeholder="Email"
-            value={filters.user_email}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <input
-            type="text"
-            name="user_name"
-            placeholder="First Name"
-            value={filters.user_name}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <input
-            type="text"
-            name="user_lastname"
-            placeholder="Last Name"
-            value={filters.user_lastname}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-          <select
-            name="level_name"
-            value={filters.level_name}
-            onChange={handleFilterChange}
-            className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="">All Levels</option>
-            {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-        </div>
+   <h1 className="text-4xl font-bold text-center text-gray-800 tracking-tight">
+  Test Management
+</h1>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-10">
-          <button
-            onClick={applyFilters}
-            disabled={loading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl shadow transition"
-          >
-            Apply Filters
-          </button>
+{/* Filtros + Acciones de filtro */}
+<div className="bg-gray-50 p-6 rounded-2xl shadow border border-gray-200 space-y-6 mt-10">
+  <h2 className="text-xl font-semibold text-gray-700">Filtros de búsqueda</h2>
 
-          <button
-            onClick={() => setShowInstructions(true)}
-            disabled={loading}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-2xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105"
-          >
-            <Plus className="w-5 h-5" />
-            Create Test
-          </button>
-        </div>
+  {/* Campos de filtro */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <input
+      type="text"
+      name="user_email"
+      placeholder="Email"
+      value={filters.user_email}
+      onChange={handleFilterChange}
+      className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    <input
+      type="text"
+      name="user_name"
+      placeholder="First Name"
+      value={filters.user_name}
+      onChange={handleFilterChange}
+      className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    <input
+      type="text"
+      name="user_lastname"
+      placeholder="Last Name"
+      value={filters.user_lastname}
+      onChange={handleFilterChange}
+      className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    <select
+      name="level_name"
+      value={filters.level_name}
+      onChange={handleFilterChange}
+      className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    >
+      <option value="">All Levels</option>
+      {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
+        <option key={level} value={level}>
+          {level}
+        </option>
+      ))}
+    </select>
+  </div>
 
-        {/* Table */}
-        <Table
-          columns={tableColumns}
-          data={tests}
-          loading={loading}
-          actionTitle=""
-          className="rounded-xl shadow-xl overflow-hidden border border-gray-200"
-          rowClassName="hover:bg-gray-100 transition duration-200"
-        />
+  {/* Botones de filtro */}
+  <div className="flex flex-wrap gap-4 justify-start">
+    <button
+      onClick={clearFilters}
+      className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition"
+    >
+      <Trash className="w-5 h-5" />
+      Clean
+    </button>
 
-        {/* Pagination */}
-         <Pagination
-            currentPage={pagination.current_page}
-            totalPages={pagination.total_pages}
-            onPageChange={changePage}
-          />
+    {/* <button
+      onClick={applyFilters}
+      disabled={loading}
+      className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow transition"
+    >
+      <Filter className="w-5 h-5" />
+      Apply
+    </button> */}
+  </div>
+</div>
+
+{/* Acciones generales */}
+<div className="flex flex-wrap gap-4 justify-end mt-10">
+  <button
+     onClick={() => exportToExcel(tests, 'reporte')}
+    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow transition"
+  >
+    <FileSpreadsheet className="w-5 h-5" />
+    Excel
+  </button>
+
+  <button
+    onClick={() => exportToPDF(tests, 'reporte')}
+    className="flex items-center gap-2 px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl shadow transition"
+  >
+    <FileDown className="w-5 h-5" />
+    PDF
+  </button>
+
+  <button
+    onClick={() => setShowInstructions(true)}
+    disabled={loading}
+    className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl shadow-lg transition transform hover:scale-105"
+  >
+    <Plus className="w-5 h-5" />
+    New
+  </button>
+</div>
+
+{/* Tabla de resultados */}
+<div className="bg-white p-6 rounded-2xl shadow border border-gray-200 mt-10">
+  <Table
+    columns={tableColumns}
+    data={tests}
+    loading={loading}
+    className="rounded-xl shadow overflow-hidden border border-gray-200"
+    rowClassName="hover:bg-gray-100 transition duration-200"
+  />
+</div>
+
+{/* Paginación */}
+<div className="mt-8">
+  <Pagination
+    currentPage={pagination.current_page}
+    totalPages={pagination.total_pages}
+    onPageChange={changePage}
+    perPage={perPage}
+    onPerPageChange={handlePerPageChange}
+  />
+</div>
+
 
         {/* Modal for Test Form */}
         <TestFormModal
@@ -1005,11 +1057,10 @@ const Tests = () => {
                     {examDetails.map((section, sectionIndex) => (
                       <div
                         key={section.section_type}
-                        className={`p-4 rounded-xl shadow-md ${
-                          section.section_type === "READING"
+                        className={`p-4 rounded-xl shadow-md ${section.section_type === "READING"
                             ? "bg-blue-50 border-l-4 border-blue-500"
                             : "bg-green-50 border-l-4 border-green-500"
-                        } transition duration-300 hover:shadow-lg`}
+                          } transition duration-300 hover:shadow-lg`}
                       >
                         <h4 className="font-bold text-lg mb-4 text-gray-900">
                           {section.section_desc} ({section.section_type})
@@ -1032,31 +1083,29 @@ const Tests = () => {
                                   {question.options.map((option) => (
                                     <li
                                       key={option.option_id}
-                                      className={`text-gray-700 ${
-                                        question.student_answer?.option_id ===
-                                        option.option_id
+                                      className={`text-gray-700 ${question.student_answer?.option_id ===
+                                          option.option_id
                                           ? "text-blue-600 font-medium"
                                           : ""
-                                      } ${
-                                        question.correct_answer?.option_id ===
-                                        option.option_id
+                                        } ${question.correct_answer?.option_id ===
+                                          option.option_id
                                           ? "text-green-600 font-medium"
                                           : ""
-                                      }`}
+                                        }`}
                                     >
                                       {option.text}
                                       {question.student_answer?.option_id ===
                                         option.option_id && (
-                                        <span className="ml-2 text-blue-600">
-                                          (Student's Answer)
-                                        </span>
-                                      )}
+                                          <span className="ml-2 text-blue-600">
+                                            (Student's Answer)
+                                          </span>
+                                        )}
                                       {question.correct_answer?.option_id ===
                                         option.option_id && (
-                                        <span className="ml-2 text-green-600">
-                                          (Correct Answer)
-                                        </span>
-                                      )}
+                                          <span className="ml-2 text-green-600">
+                                            (Correct Answer)
+                                          </span>
+                                        )}
                                     </li>
                                   ))}
                                 </ul>
