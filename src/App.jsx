@@ -12,6 +12,7 @@ import Prompts from '../src/Dashboards/Admin/Prompts/Prompts';
 import StudyMaterials from '../src/Dashboards/Admin/study_materials/StudyMaterials';
 import TestComments from '../src/Dashboards/Admin/test_comments/TestComments';
 import NewTest from './Dashboards/Students/Test/NewTest';
+import StudyHome from './Dashboards/Students/StudyMaterial/StudyHome';
 import QuestionBank from './Dashboards/Admin/QuestionBank';
 
 import ProtectedRoute from './Auth/ProtectedRoute';
@@ -76,6 +77,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="materials" element={<StudyMaterials />} />
               <Route path="newtest" element={<NewTest />} />
+              <Route path="studyhome" element={<StudyHome />} />
             </Route>
 
             {/* Página 404 */}
