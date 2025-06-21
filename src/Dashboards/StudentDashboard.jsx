@@ -1,11 +1,21 @@
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, LineChart, Line } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  LineChart,
+  Line,
+} from "recharts";
 import { AlertCircle, Lightbulb, XCircle } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import Alert from "../Components/Alert";
 import Card from "../Components/ui/card";
 import { API_URL } from "../../config";
 import { ChartJSLine } from "../Components/ui/Charts";
-import { motivationalMessages } from "../utils/motivational-messages"; // Ajusta la ruta según tu estructura
+import { motivationalMessages } from "../Utils/motivational-messages";
 
 function StudentDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -68,7 +78,8 @@ function StudentDashboard() {
               Hi there! Your journey hasn't begun.
             </p>
             <p className="text-sm text-yellow-700 max-w-md">
-              Take your first test to start tracking your progress, strengths, and personalized recommendations
+              Take your first test to start tracking your progress, strengths,
+              and personalized recommendations
             </p>
           </div>
         </Card>
@@ -80,10 +91,14 @@ function StudentDashboard() {
   const getRankSuffix = (rank) => {
     if (rank % 100 >= 11 && rank % 100 <= 13) return "th";
     switch (rank % 10) {
-      case 1: return "st";
-      case 2: return "nd";
-      case 3: return "rd";
-      default: return "th";
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
     }
   };
 
@@ -94,10 +109,12 @@ function StudentDashboard() {
   };
 
   // Preparar datos para el gráfico
-  const chartData = dashboardData.test_history.map(item => ({
-    name: item.date,
-    score: item.score,
-  })).reverse(); // Invertir el orden para mostrar de más antiguo a más reciente
+  const chartData = dashboardData.test_history
+    .map((item) => ({
+      name: item.date,
+      score: item.score,
+    }))
+    .reverse(); // Invertir el orden para mostrar de más antiguo a más reciente
 
   return (
     <main className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
@@ -124,9 +141,21 @@ function StudentDashboard() {
 
         <Card title="Your Progress (Last 5 Attempts)" bgColor="bg-blue-50">
           {chartData.length > 0 ? (
-            <ChartJSLine data={chartData} />
+            <BarChart
+              data={chartData}
+              dataKey="score" // Clave para los valores (puntuaciones)
+              title="Your Progress (Last 5 Attempts)"
+              xAxisLabel="Attempts"
+              yAxisLabel="Score"
+              colors={{
+                background: "rgba(28, 126, 214, 0.5)",
+                border: "#1c7ed6",
+              }}
+            />
           ) : (
-            <p className="text-center text-gray-500">No data available for chart.</p>
+            <p className="text-center text-gray-500">
+              No data available for chart.
+            </p>
           )}
         </Card>
 
@@ -143,21 +172,21 @@ function StudentDashboard() {
         <InfoSection
           icon={<Lightbulb className="w-8 h-8 text-blue-800" />}
           title="Recommendations"
-          text={dashboardData.recommendations.join(' ')}
+          text={dashboardData.recommendations.join(" ")}
           color="blue"
         />
 
         <InfoSection
           icon={<Lightbulb className="w-8 h-8 text-green-800" />}
           title="Strengths"
-          text={dashboardData.strengths.join(' ')}
+          text={dashboardData.strengths.join(" ")}
           color="green"
         />
 
         <InfoSection
           icon={<XCircle className="w-8 h-8 text-red-800" />}
           title="Weaknesses"
-          text={dashboardData.weaknesses.join(' ')}
+          text={dashboardData.weaknesses.join(" ")}
           color="red"
         />
 
