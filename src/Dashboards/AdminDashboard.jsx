@@ -14,7 +14,15 @@ import {
 import Card from "../Components/ui/card";
 
 // Registrar los elementos de Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -35,8 +43,7 @@ const AdminDashboard = () => {
         });
 
         const result = await response.json();
-        console.log(result);
-        
+        console.log("API Response:", result); // Depuración completa
 
         if (!response.ok) {
           throw new Error(result.message || "Error fetching dashboard data");
@@ -50,16 +57,7 @@ const AdminDashboard = () => {
             name: item.level,
             count: item.count,
           })),
-          tests_by_day_data: {
-            labels: raw.tests_by_day.map((t) => t.date),
-            datasets: [
-              {
-                label: "Tests completados",
-                data: raw.tests_by_day.map((t) => t.count),
-                backgroundColor: "#60A5FA",
-              },
-            ],
-          },
+          tests_by_day_data: processTestsByDay(raw.tests_by_day),
           approval_rate: raw.approval_rate,
           top_performers: raw.top_performers.map((p) => ({
             name: p.user_name,
@@ -91,6 +89,44 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
+  // Función para procesar los datos de tests por día
+  const processTestsByDay = (testsByDay) => {
+    const today = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      return d.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+    }).reverse(); // De día más antiguo a más reciente
+
+    // Mapa de conteos desde el backend, ajustando formato "dd mm yyyy"
+    const countMap = {};
+    testsByDay.forEach((item) => {
+      const [day, month, year] = item.date.split(" ").map(Number);
+      const formattedDate = `${year}-${month.toString().padStart(2, "0")}-${day
+        .toString()
+        .padStart(2, "0")}`;
+      countMap[formattedDate] = item.count;
+    });
+
+    // Completar con 0 para días sin datos
+    const labels = last7Days;
+    const data = last7Days.map((date) => countMap[date] || 0);
+
+    console.log("Processed Labels:", labels); // Depuración
+    console.log("Processed Data:", data); // Depuración
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Tests completados",
+          data,
+          backgroundColor: "#60A5FA",
+        },
+      ],
+    };
+  };
+
   // Destruir gráficos anteriores al actualizar
   useEffect(() => {
     return () => {
@@ -116,12 +152,17 @@ const AdminDashboard = () => {
   };
 
   if (loading) return <div className="text-center p-6">Loading...</div>;
-  if (!dashboardData) return <div className="text-center p-6">No data available</div>;
+  if (!dashboardData)
+    return <div className="text-center p-6">No data available</div>;
 
   const stats = [
     { id: 1, name: "Evaluated Students", value: dashboardData.total_evaluated },
     { id: 2, name: "Global Average", value: dashboardData.average_score },
-    { id: 3, name: "Approval Rate (%)", value: `${dashboardData.approval_rate}%` },
+    {
+      id: 3,
+      name: "Approval Rate (%)",
+      value: `${dashboardData.approval_rate}%`,
+    },
   ];
 
   const levelDistributionData = {
@@ -142,7 +183,10 @@ const AdminDashboard = () => {
       <div className="bg-white py-12 sm:py-16 mx-auto max-w-7xl px-6 lg:px-8">
         <dl className="grid grid-cols-1 gap-x-8 gap-y-10 sm:gap-y-12 lg:grid-cols-3 text-center">
           {stats.map((stat) => (
-            <div key={stat.id} className="mx-auto flex max-w-xs flex-col gap-y-3">
+            <div
+              key={stat.id}
+              className="mx-auto flex max-w-xs flex-col gap-y-3"
+            >
               <dt className="text-base leading-7 text-gray-600">{stat.name}</dt>
               <dd className="order-first text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                 {stat.value}
@@ -181,7 +225,11 @@ const AdminDashboard = () => {
               },
               scales: {
                 x: { title: { display: true, text: "Date" } },
-                y: { beginAtZero: true, title: { display: true, text: "Tests" } },
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: "Tests" },
+                  ticks: { display: true },
+                },
               },
             }}
           />
@@ -194,20 +242,33 @@ const AdminDashboard = () => {
           <caption className="p-5 text-lg font-semibold text-left text-gray-900 bg-white">
             Top 5 Students
             <p className="mt-1 text-sm font-normal text-gray-500">
-              List of the best-performing students based on their most recent scores.
+              List of the best-performing students based on their most recent
+              scores.
             </p>
           </caption>
           <thead className="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3">Name</th>
-              <th scope="col" className="px-6 py-3">Lastname</th>
-              <th scope="col" className="px-6 py-3">Score</th>
+              <th scope="col" className="px-6 py-3">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Lastname
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Score
+              </th>
             </tr>
           </thead>
           <tbody>
             {dashboardData.top_performers.map((student, idx) => (
-              <tr key={idx} className="bg-white border-b border-gray-200 hover:bg-gray-50">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+              <tr
+                key={idx}
+                className="bg-white border-b border-gray-200 hover:bg-gray-50"
+              >
+                <th
+                  scope="row"
+                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                >
                   {student.name}
                 </th>
                 <td className="px-6 py-4">{student.lastname}</td>
@@ -222,22 +283,34 @@ const AdminDashboard = () => {
       <div className="relative overflow-x-auto shadow-md rounded-lg mt-6">
         <table className="w-full text-sm text-left text-gray-500">
           <caption className="p-5 text-lg font-semibold text-left text-gray-900 bg-white">
-           Bottom 5 Students
+            Bottom 5 Students
             <p className="mt-1 text-sm font-normal text-gray-500">
               List of the lowest-scoring students for prioritized attention.
             </p>
           </caption>
           <thead className="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3">Name</th>
-              <th scope="col" className="px-6 py-3">Lastname</th>
-              <th scope="col" className="px-6 py-3">Score</th>
+              <th scope="col" className="px-6 py-3">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Lastname
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Score
+              </th>
             </tr>
           </thead>
           <tbody>
             {dashboardData.low_performers.map((student, idx) => (
-              <tr key={idx} className="bg-white border-b border-gray-200 hover:bg-gray-50">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+              <tr
+                key={idx}
+                className="bg-white border-b border-gray-200 hover:bg-gray-50"
+              >
+                <th
+                  scope="row"
+                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                >
                   {student.name}
                 </th>
                 <td className="px-6 py-4">{student.lastname}</td>
@@ -259,17 +332,33 @@ const AdminDashboard = () => {
           </caption>
           <thead className="text-xs text-gray-700 uppercase bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3">Name</th>
-              <th scope="col" className="px-6 py-3">Lastname</th>
-              <th scope="col" className="px-6 py-3">Date</th>
-              <th scope="col" className="px-6 py-3">Level</th>
-              <th scope="col" className="px-6 py-3">Score</th>
+              <th scope="col" className="px-6 py-3">
+                Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Lastname
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Date
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Level
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Score
+              </th>
             </tr>
           </thead>
           <tbody>
             {dashboardData.latest_evaluated.map((student, idx) => (
-              <tr key={idx} className="bg-white border-b border-gray-200 hover:bg-gray-50">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+              <tr
+                key={idx}
+                className="bg-white border-b border-gray-200 hover:bg-gray-50"
+              >
+                <th
+                  scope="row"
+                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
+                >
                   {student.name}
                 </th>
                 <td className="px-6 py-4">{student.lastname}</td>
