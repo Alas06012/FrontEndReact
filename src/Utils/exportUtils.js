@@ -85,3 +85,45 @@ export const exportToPDF = (data, fileName = 'report') => {
 
   doc.save(`${fileName}.pdf`);
 };
+
+
+export const exportResultDetailToPDF = (data, fileName = 'test_result') => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text('Test Result', 14, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Name: ${data.user_name} ${data.user_lastname}`, 14, 30);
+  doc.text(`Email: ${data.user_email}`, 14, 36);
+  doc.text(`Level: ${data.level_name || 'Unassigned'}`, 14, 42);
+  doc.text(`Date: ${new Date(data.date).toLocaleString()}`, 14, 48);
+  doc.text(`Score: ${data.score ?? 'N/A'}`, 14, 54);
+  doc.text(`Status: ${data.test_passed ? 'Passed' : 'Failed'}`, 14, 60);
+
+  const addSection = (title, items, startY, color) => {
+    doc.setFontSize(13);
+    doc.setTextColor(...color);
+    doc.text(title, 14, startY);
+
+    autoTable(doc, {
+      startY: startY + 4,
+      head: [['Details']],
+      body: (items?.length > 0 ? items : [{ text: 'None' }]).map((i) => [i.text]),
+      styles: { fontSize: 10 },
+      theme: 'striped',
+      headStyles: { fillColor: color },
+      margin: { left: 14, right: 14 },
+    });
+
+    return doc.lastAutoTable.finalY + 10;
+  };
+
+  let y = 70;
+  y = addSection('Strengths', data.strengths, y, [34, 139, 34]); // green
+  y = addSection('Weaknesses', data.weaknesses, y, [220, 53, 69]); // red
+  y = addSection('Recommendations', data.recommendations, y, [30, 144, 255]); // blue
+
+  doc.save(`${fileName}.pdf`);
+};
+
