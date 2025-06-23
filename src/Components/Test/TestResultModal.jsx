@@ -1,6 +1,8 @@
 import React from 'react';
 import Modal from '../../Components/Modal';
-import { CheckCircleIcon, XCircleIcon, LightBulbIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, XCircleIcon, LightBulbIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
+import { exportResultDetailToPDF } from '../../utils/exportUtils';
+
 
 const TestResultModal = ({ isOpen, onClose, resultData }) => {
   if (!resultData) return null;
@@ -99,16 +101,25 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
             </div>
           </section>
         </div>
+{/* Action Buttons (PDF & Close) */}
+<div className="mt-12 flex justify-center gap-6">
+  <button
+    onClick={() => exportResultDetailToPDF(resultData, `test_result_${resultData.user_lastname}`)}
+    className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center gap-2"
+  >
+    <ArrowDownTrayIcon className="w-5 h-5" />
+    PDF
+  </button>
 
-        {/* Close Button */}
-        <div className="mt-12 flex justify-center">
-          <button
-            onClick={onClose}
-            className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300"
-          >
-            Close
-          </button>
-        </div>
+  <button
+    onClick={onClose}
+    className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300"
+  >
+    Cerrar
+  </button>
+</div>
+
+
       </div>
     </Modal>
   );
