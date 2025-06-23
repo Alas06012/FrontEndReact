@@ -695,12 +695,12 @@ const Tests = () => {
   // Columnas de la tabla (versión simplificada sin Tooltip)
   const tableColumns = [
     {
-      header: "ID Test",
+      header: "Test ID",
       key: "pk_test",
       width: 'w-24'
     },
     {
-      header: "Fecha Creación",
+      header: "Creation Date",
       key: "created_at",
       sortable: true,
       render: (row) => formatDate(row.created_at),
@@ -721,12 +721,12 @@ const Tests = () => {
       )
     },
     {
-      header: "Nombre",
+      header: "Name",
       key: "user_name",
       render: (row) => `${row.user_name} ${row.user_lastname}`
     },
     {
-      header: "Nivel",
+      header: "Level",
       key: "level_name",
       render: (row) => (
         <span className="capitalize">
@@ -735,19 +735,19 @@ const Tests = () => {
       )
     },
     {
-      header: "Estado",
+      header: "Status",
       key: "status",
       render: (row) => <StatusBadge status={row.status} />,
       sortValue: (row) => row.status
     },
     {
-      header: "Resultado",
+      header: "Results",
       key: "test_passed",
       render: (row) => <TestResult passed={row.test_passed} />,
       sortValue: (row) => row.test_passed
     },
     {
-      header: "Acciones",
+      header: "Actions",
       key: "actions",
       width: 'w-32',
       render: (row) => (
@@ -757,14 +757,14 @@ const Tests = () => {
             color="info"
             disabled={row.status !== "COMPLETED"}
             onClick={() => row.status === "COMPLETED" && handleViewResult(row.pk_test)}
-            tooltip={row.status === "COMPLETED" ? "Ver resultados" : "Resultado no disponible"}
+            tooltip={row.status === "COMPLETED" ? "Ver resultados" : "Result not available"}
           />
 
           <ActionButton
             icon={Eye}
             color="primary"
             onClick={() => fetchExamAndComments(row.pk_test)}
-            tooltip="Ver examen y comentarios"
+            tooltip="View Test And Comments"
           />
 
           <ActionButton
@@ -772,7 +772,7 @@ const Tests = () => {
             color="danger"
             disabled={row.status === "COMPLETED"}
             onClick={() => row.status !== "COMPLETED" && handleRetryTest(row.pk_test)}
-            tooltip={row.status !== "COMPLETED" ? "Reintentar test" : "No se puede reintentar"}
+            tooltip={row.status !== "COMPLETED" ? "Retry Test" : "Cannot retry"}
           />
         </div>
       ),
@@ -819,8 +819,8 @@ const Tests = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
-      <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 flex items-center justify-center">
+      <div className="w-full p-4">
 
         <h1 className="text-4xl font-bold text-center text-gray-800 tracking-tight">
           Test Management
@@ -828,7 +828,7 @@ const Tests = () => {
 
         {/* Filtros + Acciones de filtro */}
         <div className="bg-gray-50 p-6 rounded-2xl shadow border border-gray-200 space-y-6 mt-10">
-          <h2 className="text-xl font-semibold text-gray-700">Filtros de búsqueda</h2>
+          <h2 className="text-xl font-semibold text-gray-700">Search filters</h2>
 
           {/* Campos de filtro */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
