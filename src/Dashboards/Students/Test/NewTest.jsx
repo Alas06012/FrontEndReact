@@ -19,7 +19,7 @@ import ToeicFilters from "../../../Components/Test/ToeicFilters.jsx";
 import StatusBadge from "../../../Components/StatusBadge.jsx";
 import ActionButton from "../../../Components/ActionButton.jsx";
 import TestResult from "../../../Components/TestResult.jsx";
-import { exportToExcel, exportToPDF } from '../../../utils/exportUtils.js';
+import { exportToExcel, exportToPDF } from '../../../Utils/exportUtils.js';
 
 
 const Tests = () => {
