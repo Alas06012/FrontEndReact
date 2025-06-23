@@ -33,7 +33,7 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}  size="5xl" height="95vh">
+    <Modal isOpen={isOpen} onClose={onClose} size="5xl" height="95vh">
       <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-10 text-gray-900 font-sans">
         <h2 className="text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 text-transparent bg-clip-text">
           Test Result
@@ -101,23 +101,23 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
             </div>
           </section>
         </div>
-{/* Action Buttons (PDF & Close) */}
-<div className="mt-12 flex justify-center gap-6">
-  <button
-    onClick={() => exportResultDetailToPDF(resultData, `test_result_${resultData.user_lastname}`)}
-    className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center gap-2"
-  >
-    <ArrowDownTrayIcon className="w-5 h-5" />
-    PDF
-  </button>
+        {/* Action Buttons (PDF & Close) */}
+        <div className="mt-12 flex justify-center gap-6">
+          <button
+            onClick={() => exportResultDetailToPDF(resultData, `test_result_${resultData.user_lastname}`)}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center gap-2"
+          >
+            <ArrowDownTrayIcon className="w-5 h-5" />
+            PDF
+          </button>
 
-  <button
-    onClick={onClose}
-    className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300"
-  >
-    Cerrar
-  </button>
-</div>
+          <button
+            onClick={onClose}
+            className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300"
+          >
+            Cerrar
+          </button>
+        </div>
 
 
       </div>
