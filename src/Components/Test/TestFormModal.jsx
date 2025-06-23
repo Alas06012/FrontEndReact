@@ -246,7 +246,8 @@ const TestFormModal = ({ isOpen, onClose, testData, onSubmit, initialTime, testS
                             </motion.button>
                             {currentPage === totalPages - 1 ? (
                                 <motion.button
-                                    type="submit"
+                                    type="button"
+                                    onClick={handleSubmit} 
                                     whileHover={{ scale: 1.03 }}
                                     whileTap={{ scale: 0.97 }}
                                     className="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition"

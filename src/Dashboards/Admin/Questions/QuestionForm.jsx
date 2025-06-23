@@ -57,7 +57,7 @@ const QuestionForm = ({ onSubmit, onCancel, initialData = {} }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
           body: JSON.stringify({ page: 1, per_page, search: '' }),
         });
