@@ -1,36 +1,18 @@
-// src/components/ui/card.jsx
-/*import React from "react";
+import React from "react";
 
-export function Card({ children, className = "" }) {
+const Card = ({ title, children, bgColor = "bg-white", className = "" }) => {
   return (
-    <div className={`rounded-2xl shadow-md bg-white p-4 ${className}`}>
-      {children}
+    <div
+      className={`rounded-lg shadow-md p-4 ${bgColor} ${className}`}
+    >
+      {title && (
+        <h2 className="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-2">
+          {title}
+        </h2>
+      )}
+      <div className="text-gray-700">{children}</div>
     </div>
   );
-}
-
-export function CardContent({ children }) {
-  return <div className="mt-2">{children}</div>;
-}
-*/
-
-import React from 'react';
-import PropTypes from 'prop-types';
-
-const Card = ({ title, children, bgColor = 'bg-blue-50', className = '' }) => {
-  return (
-    <div className={`p-4 rounded-lg shadow ${bgColor} ${className}`}>
-      {title && <h2 className="text-lg font-semibold text-gray-800 mb-2">{title}</h2>}
-      {children}
-    </div>
-  );
-};
-
-Card.propTypes = {
-  title: PropTypes.string,
-  children: PropTypes.node.isRequired,
-  bgColor: PropTypes.string,
-  className: PropTypes.string,
 };
 
 export default Card;

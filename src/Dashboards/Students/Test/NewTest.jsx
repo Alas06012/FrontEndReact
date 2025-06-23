@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import Alert from "../../../Components/Alert.jsx";
 import { API_URL } from "../../../../config.js";
 import { getUserRole } from "../../../Utils/auth.js";
-import { Plus } from "lucide-react";
 import Table from "../../../Components/Table.jsx";
 import Modal from "../../../Components/Modal.jsx";
 import Pagination from "../../../Components/Pagination.jsx";
-import TestFormModal from "../../../Components/TestFormModal.jsx";
+import TestFormModal from "../../../Components/Test/TestFormModal.jsx";
 import TestResultModal from "../../../Components/Test/TestResultModal.jsx";
-import { Eye, MessageCircle, MessageSquarePlus, RotateCcw, BarChart2, Edit2 } from "lucide-react";
+import { Plus, Eye, Filter, MessageCircle, MessageSquarePlus, FileSpreadsheet, FileDown, RotateCcw, BarChart2, Edit2, Trash } from "lucide-react";
 import Form from "../../../Components/Form.jsx";
 import ViewExamComments from "../../../Components/Test/ViewExamComments.jsx";
 import ViewExamDetails from "../../../Components/Test/ViewExamDetails.jsx";
@@ -20,6 +19,7 @@ import ToeicFilters from "../../../Components/Test/ToeicFilters.jsx";
 import StatusBadge from "../../../Components/StatusBadge.jsx";
 import ActionButton from "../../../Components/ActionButton.jsx";
 import TestResult from "../../../Components/TestResult.jsx";
+import { exportToExcel, exportToPDF } from '../../../Utils/exportUtils.js';
 
 
 const Tests = () => {
@@ -36,15 +36,13 @@ const Tests = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultData, setResultData] = useState(null);
-  const [filters, setFilters] = useState({
+  const defaultFilters = {
     user_email: "",
     user_name: "",
     user_lastname: "",
     level_name: "",
-    start_date: "",  // Nuevo campo
-    end_date: ""     // Nuevo campo
-  });
-
+  };
+  const [filters, setFilters] = useState(defaultFilters);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsData, setDetailsData] = useState(null);
   const [showExamModal, setShowExamModal] = useState(false);
@@ -92,6 +90,15 @@ const Tests = () => {
 
   // ---------------------------------------------------------------------------
 
+
+
+  const clearFilters = () => {
+    setFilters(defaultFilters);
+  }
+  useEffect(() => {
+    applyFilters();
+  }, [filters]);
+
   useEffect(() => {
     if (!userRole || (userRole !== "admin" && userRole !== "teacher" && userRole !== "student")) {
       Alert({
@@ -133,7 +140,7 @@ const Tests = () => {
   };
 
   /**LIMPIAR FILTROS 
-   * ----------------------------------------------------------- */
+     * ----------------------------------------------------------- */
 
   const [filtersCleared, setFiltersCleared] = useState(0); // Usamos un contador
 
@@ -156,13 +163,13 @@ const Tests = () => {
   }, [filtersCleared]);
   /** ----------------------------------------------------------- */
 
-  const fetchTests = async (page = 1, per_page = perPage, activeFilters = filters) => {
+  const fetchTests = async (page = 1, per_page = perPage) => {
     setLoading(true);
     try {
       const body = {
         page,
         per_page,
-        ...activeFilters
+        ...filters,
       };
 
       const response = await fetch(`${API_URL}/all-tests`, {
@@ -176,7 +183,6 @@ const Tests = () => {
 
       if (response.ok) {
         const data = await response.json();
-
         const testsWithComments = await Promise.all(
           data.tests.map(async (test) => {
             const commentResponse = await fetch(
@@ -685,6 +691,7 @@ const Tests = () => {
       timeZone: 'UTC'
     }).format(date);
   };
+
   // Columnas de la tabla (versión simplificada sin Tooltip)
   const tableColumns = [
     {
@@ -799,39 +806,142 @@ const Tests = () => {
     },
   ];
 
+  // Función para dividir el texto de los speakers en líneas separadas
+  const formatConversation = (text) => {
+    if (!text) return [];
+    // Divide el texto en cada aparición de [SPEAKER_X]
+    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
+    return speakerLines.map((line, index) => (
+      <p key={index} className="mb-1">
+        {line.trim()}
+      </p>
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center p-8">
       <div className="w-full max-w-7xl bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
-        <h1 className="text-4xl font-bold text-center mb-10 text-gray-800 tracking-tight">
-          Tests
+
+        <h1 className="text-4xl font-bold text-center text-gray-800 tracking-tight">
+          Test Management
         </h1>
 
-        {/* Filters */} {/* Buttons */}
-        <ToeicFilters
-          filters={filters}
-          loading={loading}
-          onFilterChange={handleFilterChange}
-          onApplyFilters={applyFilters}
-          onCreateTest={() => setShowInstructions(true)}
-          onClearFilters={handleClearFilters}
-        />
+        {/* Filtros + Acciones de filtro */}
+        <div className="bg-gray-50 p-6 rounded-2xl shadow border border-gray-200 space-y-6 mt-10">
+          <h2 className="text-xl font-semibold text-gray-700">Filtros de búsqueda</h2>
 
-        {/* Table */}
-        <Table
-          columns={tableColumns}
-          data={tests}
-          loading={loading}
-          actionTitle=""
-          className="rounded-xl shadow-xl overflow-hidden border border-gray-200"
-          rowClassName="hover:bg-gray-100 transition duration-200"
-        />
+          {/* Campos de filtro */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <input
+              type="text"
+              name="user_email"
+              placeholder="Email"
+              value={filters.user_email}
+              onChange={handleFilterChange}
+              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <input
+              type="text"
+              name="user_name"
+              placeholder="First Name"
+              value={filters.user_name}
+              onChange={handleFilterChange}
+              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <input
+              type="text"
+              name="user_lastname"
+              placeholder="Last Name"
+              value={filters.user_lastname}
+              onChange={handleFilterChange}
+              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <select
+              name="level_name"
+              value={filters.level_name}
+              onChange={handleFilterChange}
+              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">All Levels</option>
+              {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={pagination.current_page}
-          totalPages={pagination.total_pages}
-          onPageChange={changePage}
-        />
+          {/* Botones de filtro */}
+          <div className="flex flex-wrap gap-4 justify-start">
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition"
+            >
+              <Trash className="w-5 h-5" />
+              Clean
+            </button>
+
+            {/* <button
+      onClick={applyFilters}
+      disabled={loading}
+      className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow transition"
+    >
+      <Filter className="w-5 h-5" />
+      Apply
+    </button> */}
+          </div>
+        </div>
+
+        {/* Acciones generales */}
+        <div className="flex flex-wrap gap-4 justify-end mt-10">
+          <button
+            onClick={() => exportToExcel(tests, 'reporte')}
+            className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow transition"
+          >
+            <FileSpreadsheet className="w-5 h-5" />
+            Excel
+          </button>
+
+          <button
+            onClick={() => exportToPDF(tests, 'reporte')}
+            className="flex items-center gap-2 px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl shadow transition"
+          >
+            <FileDown className="w-5 h-5" />
+            PDF
+          </button>
+
+          <button
+            onClick={() => setShowInstructions(true)}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl shadow-lg transition transform hover:scale-105"
+          >
+            <Plus className="w-5 h-5" />
+            New
+          </button>
+        </div>
+
+        {/* Tabla de resultados */}
+        <div className="bg-white p-6 rounded-2xl shadow border border-gray-200 mt-10">
+          <Table
+            columns={tableColumns}
+            data={tests}
+            loading={loading}
+            className="rounded-xl shadow overflow-hidden border border-gray-200"
+            rowClassName="hover:bg-gray-100 transition duration-200"
+          />
+        </div>
+
+        {/* Paginación */}
+        <div className="mt-8">
+          <Pagination
+            currentPage={pagination.current_page}
+            totalPages={pagination.total_pages}
+            onPageChange={changePage}
+            perPage={perPage}
+            onPerPageChange={handlePerPageChange}
+          />
+        </div>
+
 
         {/* Modal for Test Form */}
         <TestFormModal
@@ -938,7 +1048,7 @@ const Tests = () => {
             setShowEditCommentModal(false);
             setSelectedComment(null);
           }}
-          title={`Edit Comment for Test`}
+          title={`Edit Comment for Test #${selectedTestId}`}
         >
           <div className="max-h-[80vh] overflow-y-auto">
             {selectedComment && (
@@ -961,7 +1071,6 @@ const Tests = () => {
             )}
           </div>
         </Modal>
-
 
       </div>
       {isLoading && (

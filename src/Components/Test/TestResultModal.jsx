@@ -46,7 +46,7 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
           </div>
           <div className="space-y-3">
             <p className="text-lg"><span className="font-semibold text-gray-700">Date:</span> {date ? new Date(date).toLocaleString() : 'N/A'}</p>
-            <p className="text-lg"><span className="font-semibold text-gray-700">Score:</span> {score ?? 'N/A'} / 100</p>
+            <p className="text-lg"><span className="font-semibold text-gray-700">Score:</span> {score ?? 'N/A'}</p>
             <p className="flex items-center text-lg font-semibold">
               Status:&nbsp;
               {test_passed ? (
