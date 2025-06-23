@@ -1,7 +1,7 @@
 import React from 'react';
 import Modal from '../../Components/Modal';
 import { CheckCircleIcon, XCircleIcon, LightBulbIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
-import { exportResultDetailToPDF } from '../../utils/exportUtils';
+import { exportResultDetailToPDF } from '../../Utils/exportUtils';
 
 
 const TestResultModal = ({ isOpen, onClose, resultData }) => {
