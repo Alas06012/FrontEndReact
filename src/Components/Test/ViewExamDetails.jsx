@@ -394,9 +394,9 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.4 }}
     >
-      <h3 className="text-lg font-semibold mb-4 text-gray-800 top-0 py-2 z-10">
+      {/* <h3 className="text-lg font-semibold mb-4 text-gray-800 top-0 py-2 z-10">
         Exam Details
-      </h3>
+      </h3> */}
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">

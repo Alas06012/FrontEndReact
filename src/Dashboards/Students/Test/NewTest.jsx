@@ -763,6 +763,7 @@ const Tests = () => {
           <ActionButton
             icon={Eye}
             color="primary"
+            disabled={row.status !== "COMPLETED"}
             onClick={() => fetchExamAndComments(row.pk_test)}
             tooltip="View Test And Comments"
           />
