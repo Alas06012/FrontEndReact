@@ -4,7 +4,6 @@ import { API_URL } from "../../../config";
 import LoadingSpinner from "../../Components/ui/LoadingSpinner";
 import AICommentRenderer from '../Test/AICommentRenderer';
 
-// Animaciones fuera del componente para evitar recreación en cada render
 const DropdownAnimation = {
   hidden: { 
     opacity: 0, 
@@ -36,44 +35,13 @@ const ChevronAnimation = {
 };
 
 const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
-  // Estados
   const [examDetails, setExamDetails] = useState(initialExamDetails);
   const [expandedComments, setExpandedComments] = useState({});
   const [loadingComments, setLoadingComments] = useState({});
   const [error, setError] = useState(null);
   const [remainingRequests, setRemainingRequests] = useState(5);
+  const [stats, setStats] = useState({ answered: 0, correct: 0, total: 0 });
 
-  // Memoización de detalles procesados
-  const parsedExamDetails = useMemo(() => {
-    if (!initialExamDetails) return null;
-    
-    return initialExamDetails.map(section => ({
-      ...section,
-      titles: section.titles.map(title => ({
-        ...title,
-        questions: title.questions.map(question => {
-          try {
-            return {
-              ...question,
-              ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null
-            };
-          } catch (e) {
-            console.error('Error parsing AI comments:', e);
-            return { ...question, ai_comments: null };
-          }
-        })
-      }))
-    }));
-  }, [initialExamDetails]);
-
-  // Efecto para cargar detalles procesados
-  useEffect(() => {
-    if (parsedExamDetails) {
-      setExamDetails(parsedExamDetails);
-    }
-  }, [parsedExamDetails]);
-
-  // Verificación de límites de peticiones
   const checkRemainingRequests = useCallback(async () => {
     if (userRole === 'admin' || userRole === 'teacher') return;
 
@@ -97,7 +65,6 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
     checkRemainingRequests();
   }, [checkRemainingRequests]);
 
-  // Toggle para comentarios
   const toggleComment = useCallback((questionId) => {
     setExpandedComments(prev => ({
       ...prev,
@@ -105,7 +72,6 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
     }));
   }, []);
 
-  // Fetch de comentarios AI con memoización
   const fetchAIComment = useCallback(async (testdetailId, questionText, studentAnswer, correctAnswer, titleTest) => {
     try {
       setLoadingComments(prev => ({ ...prev, [testdetailId]: true }));
@@ -131,9 +97,9 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
       if (!response.ok) {
         if (response.status === 429) {
           setRemainingRequests(0);
-          throw new Error(data.error || 'Límite diario alcanzado');
+          throw new Error(data.error || 'Daily limit reached');
         }
-        throw new Error(data.error || 'Error al obtener el análisis');
+        throw new Error(data.error || 'Error getting analysis');
       }
 
       setExamDetails(prevDetails => prevDetails.map(section => ({
@@ -164,7 +130,74 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
     }
   }, []);
 
-  // Renderizado de sección de comentarios AI
+  const parsedExamDetails = useMemo(() => {
+    if (!initialExamDetails) return null;
+    
+    let answeredQuestions = 0;
+    let correctAnswers = 0;
+    let totalQuestions = 0;
+
+    const processedData = initialExamDetails.map(section => {
+      const filteredTitles = section.titles.map(title => {
+        const filteredQuestions = title.questions.filter(question => {
+          totalQuestions++;
+          const hasAnswer = !!question.student_answer?.option_id;
+          const isCorrect = hasAnswer && 
+            question.student_answer?.option_id === question.correct_answer?.option_id;
+          
+          if (hasAnswer) answeredQuestions++;
+          if (isCorrect) correctAnswers++;
+          
+          return userRole === 'admin' || userRole === 'teacher' || hasAnswer;
+        });
+
+        if (userRole === 'student' && filteredQuestions.length === 0) {
+          return null;
+        }
+
+        return {
+          ...title,
+          questions: filteredQuestions.map(question => {
+            try {
+              return {
+                ...question,
+                ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null
+              };
+            } catch (e) {
+              console.error('Error parsing AI comments:', e);
+              return { ...question, ai_comments: null };
+            }
+          })
+        };
+      }).filter(Boolean);
+
+      return {
+        ...section,
+        titles: filteredTitles
+      };
+    });
+
+    setStats({
+      answered: answeredQuestions,
+      correct: correctAnswers,
+      total: totalQuestions
+    });
+
+    localStorage.setItem('examStats', JSON.stringify({
+      answered: answeredQuestions,
+      correct: correctAnswers,
+      total: totalQuestions
+    }));
+
+    return processedData;
+  }, [initialExamDetails, userRole]);
+
+  useEffect(() => {
+    if (parsedExamDetails) {
+      setExamDetails(parsedExamDetails);
+    }
+  }, [parsedExamDetails]);
+
   const renderAICommentSection = useCallback((question, title) => {
     if (!title) {
       console.error("Title is undefined for question:", question);
@@ -185,7 +218,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            {expandedComments[questionId] ? 'Ocultar análisis' : 'Ver análisis de la IA'}
+            {expandedComments[questionId] ? 'Hide analysis' : 'View AI analysis'}
             <motion.svg
               className="ml-1 h-4 w-4"
               fill="none"
@@ -216,11 +249,11 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
     }
 
     if (!hasStudentAnswer) {
-      return <p className="text-sm text-gray-500 italic">No se ha seleccionado respuesta para analizar</p>;
+      return <p className="text-sm text-gray-500 italic">No answer selected to analyze</p>;
     }
 
     if (remainingRequests <= 0) {
-      return <p className="text-sm text-orange-600">Límite diario alcanzado (5 análisis por día)</p>;
+      return <p className="text-sm text-orange-600">Daily limit reached (5 analyses per day)</p>;
     }
 
     return (
@@ -230,58 +263,66 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
         className={`text-sm ${loadingComments[questionId]
           ? 'text-gray-500 cursor-not-allowed'
           : 'text-blue-600 hover:text-blue-800'} font-medium focus:outline-none`}
-        title={`Te quedan ${remainingRequests} análisis hoy`}
+        title={`You have ${remainingRequests} analyses left today`}
       >
         {loadingComments[questionId] ? (
-          <LoadingSpinner text="Generando análisis..." />
+          <LoadingSpinner text="Generating analysis..." />
         ) : (
-          'Realizar análisis con IA'
+          'Analyze with AI'
         )}
       </button>
     );
   }, [expandedComments, fetchAIComment, loadingComments, remainingRequests, toggleComment]);
 
-  // Renderizado de preguntas memoizado
   const renderQuestions = useCallback((title, titleIndex, sectionIndex) => {
-    return title.questions.map((question, questionIndex) => (
-      <div
-        key={`${question.question_id}-${questionIndex}`}
-        className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
-      >
-        <p className="font-semibold text-gray-800 mb-2">
-          {sectionIndex + 1}.{titleIndex + 1}.{questionIndex + 1} {question.question_text}
-        </p>
+    return title.questions.map((question, questionIndex) => {
+      const hasStudentAnswer = !!question.student_answer?.option_id;
+      const isCorrect = hasStudentAnswer && 
+        question.student_answer?.option_id === question.correct_answer?.option_id;
 
-        <ul className="list-disc pl-5 space-y-1 mb-3">
-          {question.options.map((option) => {
-            const isStudent = question.student_answer?.option_id === option.option_id;
-            const isCorrect = question.correct_answer?.option_id === option.option_id;
+      return (
+        <div
+          key={`${question.question_id}-${questionIndex}`}
+          className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
+        >
+          <p className="font-semibold text-gray-800 mb-2">
+            {sectionIndex + 1}.{titleIndex + 1}.{questionIndex + 1} {question.question_text}
+          </p>
 
-            return (
-              <li
-                key={option.option_id}
-                className={`${isStudent ? "text-blue-600 font-medium" : ""} ${
-                  isCorrect ? "text-green-600 font-medium" : ""
-                }`}
-              >
-                {option.text}
-                {isStudent && <span className="ml-2 text-blue-600">(Tu respuesta)</span>}
-                {isCorrect && !isStudent && (
-                  <span className="ml-2 text-green-600">(Respuesta correcta)</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+          <ul className="list-disc pl-5 space-y-1 mb-3">
+            {question.options.map((option) => {
+              const isStudent = question.student_answer?.option_id === option.option_id;
+              const isCorrectOption = question.correct_answer?.option_id === option.option_id;
 
-        <div className="mt-3 border-t pt-3">
-          {renderAICommentSection(question, title)}
+              return (
+                <li
+                  key={option.option_id}
+                  className={`
+                    ${isStudent ? "text-blue-600 font-medium" : ""}
+                    ${userRole !== 'student' && isCorrectOption ? "text-green-600 font-medium" : ""}
+                  `}
+                >
+                  {option.text}
+                  {isStudent && <span className="ml-2 text-blue-600">(Your answer)</span>}
+                  {userRole !== 'student' && isCorrectOption && !isStudent && (
+                    <span className="ml-2 text-green-600">(Correct answer)</span>
+                  )}
+                  {userRole !== 'student' && isCorrectOption && isStudent && (
+                    <span className="ml-2 text-green-600">(Correct)</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-3 border-t pt-3">
+            {renderAICommentSection(question, title)}
+          </div>
         </div>
-      </div>
-    ));
-  }, [renderAICommentSection]);
+      );
+    });
+  }, [renderAICommentSection, userRole]);
 
-  // Renderizado de títulos memoizado
   const renderTitles = useCallback((section, sectionIndex) => {
     return section.titles.map((title, titleIndex) => (
       <div key={`${title.title_id}-${titleIndex}`} className="mb-6">
@@ -296,7 +337,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
                   className="w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <source src={title.title_url} type="audio/mpeg" />
-                  Tu navegador no soporta el elemento de audio.
+                  Your browser does not support the audio element.
                 </audio>
 
                 {(userRole === 'admin' || userRole === 'teacher') && (
@@ -319,7 +360,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
                 )}
               </>
             ) : (
-              <p className="text-red-500">Audio no disponible</p>
+              <p className="text-red-500">Audio not available</p>
             )
           ) : (
             <>
@@ -339,7 +380,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
   if (!examDetails) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-gray-600">Cargando detalles del examen...</p>
+        <p className="text-gray-600">Loading exam details...</p>
       </div>
     );
   }
@@ -354,15 +395,15 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
       transition={{ duration: 0.4 }}
     >
       <h3 className="text-lg font-semibold mb-4 text-gray-800 top-0 py-2 z-10">
-        Detalles del Examen
+        Exam Details
       </h3>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
-          {error.includes('Límite diario') ? (
+          {error.includes('Daily limit') ? (
             <div>
               <p>{error}</p>
-              <p className="mt-2">Solo puedes realizar 5 análisis por día. Vuelve mañana.</p>
+              <p className="mt-2">You can only perform 5 analyses per day. Try again tomorrow.</p>
             </div>
           ) : (
             error
@@ -372,7 +413,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
 
       {userRole !== 'admin' && userRole !== 'teacher' && (
         <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-          Análisis disponibles hoy: <span className="font-bold">{remainingRequests}/5</span>
+          Analyses available today: <span className="font-bold">{remainingRequests}/5</span>
         </div>
       )}
 
