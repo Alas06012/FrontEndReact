@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Edit2, Plus, X, MessageSquare, User, Mail } from "lucide-react";
+import { Edit2, Plus, X, MessageSquare, User, Mail, Check, List } from "lucide-react";
 
 const ViewExamComments = ({
-    comments,
+    comments=[],
     isAddingComment,
     userRole,
     commentFields,
@@ -11,10 +11,19 @@ const ViewExamComments = ({
     handleEditCommentClick,
     setIsAddingComment,
     Form,
-    onCloseMobile,
+    onCloseMobile
 }) => {
     const canEdit = userRole === "admin" || userRole === "teacher";
     const isMobile = window.innerWidth < 768;
+    const [stats, setStats] = useState({ answered: 0, correct: 0, total: 0 });
+
+    // Obtener stats del localStorage
+    useEffect(() => {
+        const savedStats = localStorage.getItem('examStats');
+        if (savedStats) {
+            setStats(JSON.parse(savedStats));
+        }
+    }, []);
 
     // Animaciones
     const containerVariants = {
@@ -60,29 +69,84 @@ const ViewExamComments = ({
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.1, ease: "easeInOut" }}
         >
-            {/* Header */}
-            <motion.div
-                className="flex items-center justify-between mb-6 sticky top-0 backdrop-blur-sm bg-white/70 z-10 py-3 px-4 rounded-xl border border-white/20 shadow-sm"
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-            >
-                <div className="flex items-center space-x-3">
-                    <MessageSquare className="text-indigo-600 w-6 h-6" />
-                    <h3 className="text-xl font-bold text-gray-800">Exam Comments</h3>
+            {/* Header con estadísticas */}
+            <div className="space-y-4 mb-6">
+                <motion.div
+                    className="flex items-center justify-between sticky top-0 backdrop-blur-sm bg-white/70 z-10 py-3 px-4 rounded-xl border border-white/20 shadow-sm"
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <div className="flex items-center space-x-3">
+                        <MessageSquare className="text-indigo-600 w-6 h-6" />
+                        <h3 className="text-xl font-bold text-gray-800">Exam Comments</h3>
+                    </div>
+
+                    {isMobile && onCloseMobile && (
+                        <motion.button
+                            onClick={onCloseMobile}
+                            className="text-gray-500 hover:text-gray-800 p-2 rounded-full transition"
+                            whileHover={{ rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                        >
+                            <X className="w-5 h-5" />
+                        </motion.button>
+                    )}
+                </motion.div>
+
+                {/* Tarjetas de estadísticas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <motion.div 
+                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-200"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-blue-100 p-2 rounded-full">
+                                <List className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-medium text-gray-500">Questions answered</h4>
+                                <p className="text-2xl font-bold text-gray-800">
+                                    {stats.answered}/{stats.total}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    <motion.div 
+                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-200"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        <div className="flex items-center space-x-3">
+                            <div className="bg-green-100 p-2 rounded-full">
+                                <Check className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-medium text-gray-500">Correct answers</h4>
+                                <p className="text-2xl font-bold text-gray-800">
+                                    {stats.correct}/{stats.total}
+                                </p>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
 
-                {isMobile && onCloseMobile && (
-                    <motion.button
-                        onClick={onCloseMobile}
-                        className="text-gray-500 hover:text-gray-800 p-2 rounded-full transition"
-                        whileHover={{ rotate: 90 }}
-                        whileTap={{ scale: 0.9 }}
+                {userRole === 'student' && (
+                    <motion.div
+                        className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md text-sm text-yellow-700"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
                     >
-                        <X className="w-5 h-5" />
-                    </motion.button>
+                        <p><strong>Note:</strong> You're only seeing the questions you answered ({stats.answered}/{stats.total}). 
+                        Questions you didn't answer aren't displayed.</p>
+                    </motion.div>
                 )}
-            </motion.div>
+            </div>
 
             {isAddingComment ? (
                 <motion.div
@@ -100,7 +164,7 @@ const ViewExamComments = ({
                         layout="grid-cols-1"
                     />
                 </motion.div>
-            ) : comments.length > 0 ? (
+            ) : Array.isArray(comments) && comments.length > 0 ? (
                 <motion.div
                     className="space-y-5"
                     variants={containerVariants}
@@ -160,7 +224,7 @@ const ViewExamComments = ({
                                     )}
                                 </div>
 
-                                {/* Cuerpo del comentario con ajuste para texto largo */}
+                                {/* Cuerpo del comentario */}
                                 <div className="flex">
                                     <div className="ml-11 pl-1 border-l-2 border-indigo-100 min-w-0">
                                         <p className="text-gray-700 break-words whitespace-pre-wrap">
@@ -217,7 +281,6 @@ const ViewExamComments = ({
                         >
                             <Plus className="w-5 h-5" />
                             <span>Add Comment</span>
-                            
                         </motion.button>
                     )}
                 </motion.div>
