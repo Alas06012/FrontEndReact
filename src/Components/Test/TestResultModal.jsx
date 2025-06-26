@@ -1,8 +1,8 @@
 import React from 'react';
 import Modal from '../../Components/Modal';
-import { CheckCircleIcon, XCircleIcon, LightBulbIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
+import { ChevronDownIcon, ChevronUpIcon, CheckCircleIcon, XCircleIcon, LightBulbIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 import { exportResultDetailToPDF } from '../../Utils/exportUtils';
-
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TestResultModal = ({ isOpen, onClose, resultData }) => {
   if (!resultData) return null;
@@ -20,106 +20,261 @@ const TestResultModal = ({ isOpen, onClose, resultData }) => {
     recommendations,
   } = resultData;
 
-  const renderList = (items, colorClass, emptyText) => (
-    items?.length > 0 ? (
-      <ul className={`list-disc list-inside ${colorClass} space-y-2 font-medium leading-relaxed`}>
-        {items.map((item) => (
-          <li key={item.id}>{item.text}</li>
-        ))}
-      </ul>
-    ) : (
-      <p className={`italic ${colorClass.replace('900', '700')}`}>{emptyText}</p>
-    )
+  // Componente para items individuales
+  const ResultItem = ({ item, color }) => (
+    <motion.div
+      className={`mb-4 p-3 py-3 border-l-4 ${color.border} bg-white rounded-r-lg shadow-sm`}
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ x: 5 }}
+    >
+      <div className="flex items-start">
+        <div className={`flex-shrink-0 mt-1 mr-4 ${color.icon}`}>
+          {color.iconComponent}
+        </div>
+        <div className="flex-grow">
+          <p className={`text-md md:text-lg font-medium ${color.text}`}>{item.text}</p>
+          {item.details && (
+            <p className="mt-2 text-gray-600">{item.details}</p>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size="5xl" height="95vh">
-      <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-10 text-gray-900 font-sans">
-        <h2 className="text-4xl font-extrabold mb-8 text-center bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-600 text-transparent bg-clip-text">
-          Test Result
-        </h2>
-
-        {/* Header Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10 border-b border-gray-200 pb-8">
-          <div className="space-y-3">
-            <p className="text-lg"><span className="font-semibold text-gray-700">Student:</span> {user_name} {user_lastname}</p>
-            <p className="text-lg"><span className="font-semibold text-gray-700">Email:</span> {user_email}</p>
-            <p className="text-lg"><span className="font-semibold text-gray-700">Level:</span> {level_name}</p>
+  // Componente para secciones expandibles
+  const ExpandableSection = ({ title, items, emptyText, color }) => {
+    const [isExpanded, setIsExpanded] = React.useState(false);
+    
+    return (
+      <motion.div
+        className={`rounded-xl ${color.bg} p-6 mb-6 shadow-md hover:shadow-lg transition-shadow`}
+        whileHover={{ y: -3 }}
+      >
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-between focus:outline-none group"
+          aria-expanded={isExpanded}
+        >
+          <div className="flex items-center">
+            <motion.div
+              className={`p-3 rounded-xl ${color.iconBg} mr-4 shadow-sm`}
+              animate={isExpanded ? "hidden" : "visible"}
+              variants={{
+                visible: { opacity: 1, scale: 1 },
+                hidden: { opacity: 0, scale: 0 }
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              {color.iconComponent}
+            </motion.div>
+            <h3 className={`text-lg md:text-2xl font-bold ${color.title}`}>{title}</h3>
           </div>
-          <div className="space-y-3">
-            <p className="text-lg"><span className="font-semibold text-gray-700">Date:</span> {date ? new Date(date).toLocaleString() : 'N/A'}</p>
-            <p className="text-lg"><span className="font-semibold text-gray-700">Score:</span> {score ?? 'N/A'}</p>
-            <p className="flex items-center text-lg font-semibold">
-              Status:&nbsp;
-              {test_passed ? (
-                <>
-                  <CheckCircleIcon className="w-7 h-7 text-green-600" />
-                  <span className="ml-2 text-green-800">Passed</span>
-                </>
+          <motion.div
+            animate={isExpanded ? "expanded" : "collapsed"}
+            variants={{
+              expanded: { rotate: 0, opacity: 1 },
+              collapsed: { rotate: -90, opacity: 0.8 }
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDownIcon className={`w-6 h-6 ${isExpanded ? 'text-gray-700' : 'text-gray-500'}`} />
+          </motion.div>
+        </button>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial="collapsed"
+              animate="open"
+              exit="collapsed"
+              variants={{
+                open: { 
+                  opacity: 1,
+                  height: "auto",
+                  transition: { 
+                    when: "beforeChildren",
+                    staggerChildren: 0.1
+                  }
+                },
+                collapsed: { 
+                  opacity: 0,
+                  height: 0,
+                  transition: { 
+                    when: "afterChildren"
+                  }
+                }
+              }}
+              transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+              className="mt-6 pl-4"
+            >
+              {items?.length > 0 ? (
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <ResultItem 
+                      key={item.id} 
+                      item={item} 
+                      color={color}
+                    />
+                  ))}
+                </div>
               ) : (
-                <>
-                  <XCircleIcon className="w-7 h-7 text-red-600" />
-                  <span className="ml-2 text-red-800">Failed</span>
-                </>
+                <p className={`italic text-lg ${color.emptyText} pl-4`}>{emptyText}</p>
               )}
-            </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  };
+
+  // Configuración de colores y estilos
+  const sectionTypes = {
+    strengths: {
+      border: "border-emerald-300",
+      bg: "bg-gradient-to-br from-emerald-50 to-emerald-100",
+      iconBg: "bg-emerald-100",
+      icon: "text-emerald-600",
+      title: "text-emerald-800",
+      text: "text-emerald-900",
+      emptyText: "text-emerald-600",
+      iconComponent: <LightBulbIcon className="w-6 h-6" />
+    },
+    weaknesses: {
+      border: "border-rose-300",
+      bg: "bg-gradient-to-br from-rose-50 to-rose-100",
+      iconBg: "bg-rose-100",
+      icon: "text-rose-600",
+      title: "text-rose-800",
+      text: "text-rose-900",
+      emptyText: "text-rose-600",
+      iconComponent: <XCircleIcon className="w-6 h-6" />
+    },
+    recommendations: {
+      border: "border-blue-300",
+      bg: "bg-gradient-to-br from-blue-50 to-blue-100",
+      iconBg: "bg-blue-100",
+      icon: "text-blue-600",
+      title: "text-blue-800",
+      text: "text-blue-900",
+      emptyText: "text-blue-600",
+      iconComponent: <LightBulbIcon className="w-6 h-6" />
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="7xl">
+      <div className="mx-auto bg-white rounded-2xl overflow-hidden max-w-7xl">
+        {/* Main Content */}
+        <div className="p-10 text-gray-800 font-sans">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-purple-700 mb-2">Test Result Summary</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-600 mx-auto rounded-full"></div>
+          </div>
+          
+          {/* User Info Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
+            <div className="bg-white border border-gray-400 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-2xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-400">Student Information</h3>
+              <div className="space-y-4">
+                <p className="text-lg">
+                  <span className="font-medium text-gray-600">Name:</span>
+                  <span className="ml-3 font-semibold">{user_name} {user_lastname}</span>
+                </p>
+                <p className="text-lg">
+                  <span className="font-medium text-gray-600">Email:</span>
+                  <span className="ml-3 font-semibold">{user_email}</span>
+                </p>
+                <p className="text-lg">
+                  <span className="font-medium text-gray-600">Level:</span>
+                  <span className="ml-3 font-semibold">{level_name}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-gray-400 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow">
+              <h3 className="text-2xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-400">Test Details</h3>
+              <div className="space-y-4">
+                <p className="text-lg">
+                  <span className="font-medium text-gray-600">Date:</span>
+                  <span className="ml-3 font-semibold">{date ? new Date(date).toLocaleString() : 'N/A'}</span>
+                </p>
+                <p className="text-lg">
+                  <span className="font-medium text-gray-600">Score:</span>
+                  <span className="ml-3 font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent text-xl">
+                    {score ?? 'N/A'}
+                  </span>
+                </p>
+                <p className="flex items-center text-lg">
+                  <span className="font-medium text-gray-600">Status:</span>
+                  <span className="ml-3 flex items-center">
+                    {test_passed ? (
+                      <>
+                        <CheckCircleIcon className="w-7 h-7 text-emerald-500" />
+                        <span className="ml-2 font-semibold text-emerald-700">Passed</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircleIcon className="w-7 h-7 text-rose-500" />
+                        <span className="ml-2 font-semibold text-rose-700">Failed</span>
+                      </>
+                    )}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Assessment Sections */}
+          <div className="space-y-6">
+            <ExpandableSection
+              title="Strengths"
+              items={strengths}
+              emptyText="No notable strengths identified."
+              color={sectionTypes.strengths}
+            />
+
+            <ExpandableSection
+              title="Weaknesses"
+              items={weaknesses}
+              emptyText="No notable weaknesses identified."
+              color={sectionTypes.weaknesses}
+            />
+
+            <ExpandableSection
+              title="Recommendations"
+              items={recommendations}
+              emptyText="No specific recommendations provided."
+              color={sectionTypes.recommendations}
+            />
           </div>
         </div>
 
-        {/* Horizontal Cards */}
-        <div className="space-y-8">
-          {/* Strengths */}
-          <section className="bg-gradient-to-tr from-green-100 to-green-50 border border-green-300 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-start space-x-6">
-            <div className="flex-shrink-0 text-green-800">
-              <LightBulbIcon className="w-10 h-10" />
-            </div>
-            <div className="flex-grow">
-              <h3 className="text-2xl font-semibold mb-3">Strengths</h3>
-              {renderList(strengths, 'text-green-900', 'No notable strengths identified.')}
-            </div>
-          </section>
+        {/* Footer with Actions */}
+        <div className="px-10 py-8 border-t border-gray-400">
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
+            <motion.button
+              onClick={() => exportResultDetailToPDF(resultData, `test_result_${resultData.user_lastname}`)}
+              className="px-10 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowDownTrayIcon className="w-6 h-6" />
+              <span className="text-lg">Download PDF Report</span>
+            </motion.button>
 
-          {/* Weaknesses */}
-          <section className="bg-gradient-to-tr from-red-100 to-red-50 border border-red-300 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-start space-x-6">
-            <div className="flex-shrink-0 text-red-800">
-              <XCircleIcon className="w-10 h-10" />
-            </div>
-            <div className="flex-grow">
-              <h3 className="text-2xl font-semibold mb-3">Weaknesses</h3>
-              {renderList(weaknesses, 'text-red-900', 'No notable weaknesses identified.')}
-            </div>
-          </section>
-
-          {/* Recommendations */}
-          <section className="bg-gradient-to-tr from-blue-100 to-blue-50 border border-blue-300 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex items-start space-x-6">
-            <div className="flex-shrink-0 text-blue-800">
-              <LightBulbIcon className="w-10 h-10" />
-            </div>
-            <div className="flex-grow">
-              <h3 className="text-2xl font-semibold mb-3">Recommendations</h3>
-              {renderList(recommendations, 'text-blue-900', 'No specific recommendations provided.')}
-            </div>
-          </section>
+            <motion.button
+              onClick={onClose}
+              className="px-10 py-4 bg-white border-2 border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <span className="text-lg">Close Results</span>
+            </motion.button>
+          </div>
         </div>
-        {/* Action Buttons (PDF & Close) */}
-        <div className="mt-12 flex justify-center gap-6">
-          <button
-            onClick={() => exportResultDetailToPDF(resultData, `test_result_${resultData.user_lastname}`)}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center gap-2"
-          >
-            <ArrowDownTrayIcon className="w-5 h-5" />
-            PDF
-          </button>
-
-          <button
-            onClick={onClose}
-            className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-4 px-10 rounded-3xl shadow-lg transform hover:scale-105 transition-transform duration-300"
-          >
-            Cerrar
-          </button>
-        </div>
-
-
       </div>
     </Modal>
   );
