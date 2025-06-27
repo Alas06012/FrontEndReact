@@ -1,27 +1,30 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle, ChevronLeft, ChevronRight, BookOpenCheck } from "lucide-react";
 import { API_URL } from "../../../config";
 import LoadingSpinner from "../../Components/ui/LoadingSpinner";
 import AICommentRenderer from '../Test/AICommentRenderer';
 
 const DropdownAnimation = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     height: 0,
     marginTop: 0,
-    transition: { duration: 0.2, ease: "easeInOut" } 
+    transition: { duration: 0.2, ease: "easeInOut" }
   },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     height: "auto",
     marginTop: "0.75rem",
-    transition: { 
+    transition: {
       duration: 0.3,
       ease: "easeInOut",
       when: "beforeChildren"
-    } 
+    }
   }
 };
+
+
 
 const ChevronAnimation = {
   rotate: {
@@ -41,6 +44,8 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
   const [error, setError] = useState(null);
   const [remainingRequests, setRemainingRequests] = useState(5);
   const [stats, setStats] = useState({ answered: 0, correct: 0, total: 0 });
+  const [currentIncorrectIndex, setCurrentIncorrectIndex] = useState(-1);
+  const incorrectQuestionsRef = useRef([]);
 
   const checkRemainingRequests = useCallback(async () => {
     if (userRole === 'admin' || userRole === 'teacher') return;
@@ -106,9 +111,9 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
         ...section,
         titles: section.titles.map(title => ({
           ...title,
-          questions: title.questions.map(question => 
-            question.testdetail_id === testdetailId 
-              ? { ...question, ai_comments: data.analysis } 
+          questions: title.questions.map(question =>
+            question.testdetail_id === testdetailId
+              ? { ...question, ai_comments: data.analysis }
               : question
           )
         }))
@@ -132,22 +137,31 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
 
   const parsedExamDetails = useMemo(() => {
     if (!initialExamDetails) return null;
-    
+
     let answeredQuestions = 0;
     let correctAnswers = 0;
     let totalQuestions = 0;
+    incorrectQuestionsRef.current = [];
 
     const processedData = initialExamDetails.map(section => {
       const filteredTitles = section.titles.map(title => {
         const filteredQuestions = title.questions.filter(question => {
           totalQuestions++;
           const hasAnswer = !!question.student_answer?.option_id;
-          const isCorrect = hasAnswer && 
+          const isCorrect = hasAnswer &&
             question.student_answer?.option_id === question.correct_answer?.option_id;
-          
+
           if (hasAnswer) answeredQuestions++;
           if (isCorrect) correctAnswers++;
-          
+
+          if ((userRole === 'admin' || userRole === 'teacher') && hasAnswer && !isCorrect) {
+            incorrectQuestionsRef.current.push({
+              id: question.testdetail_id,
+              section: section.section_desc,
+              questionText: question.question_text
+            });
+          }
+
           return userRole === 'admin' || userRole === 'teacher' || hasAnswer;
         });
 
@@ -161,7 +175,10 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
             try {
               return {
                 ...question,
-                ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null
+                ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null,
+                isIncorrect: (userRole === 'admin' || userRole === 'teacher') &&
+                  !!question.student_answer?.option_id &&
+                  question.student_answer?.option_id !== question.correct_answer?.option_id
               };
             } catch (e) {
               console.error('Error parsing AI comments:', e);
@@ -176,6 +193,13 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
         titles: filteredTitles
       };
     });
+
+    // Actualizar el índice actual si hay preguntas incorrectas
+    if (incorrectQuestionsRef.current.length > 0) {
+      setCurrentIncorrectIndex(0);
+    } else {
+      setCurrentIncorrectIndex(-1);
+    }
 
     setStats({
       answered: answeredQuestions,
@@ -197,6 +221,31 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
       setExamDetails(parsedExamDetails);
     }
   }, [parsedExamDetails]);
+
+  const scrollToQuestion = (questionId) => {
+    const element = document.getElementById(`question-${questionId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('animate-pulse', 'bg-red-100');
+      setTimeout(() => {
+        element.classList.remove('animate-pulse', 'bg-red-100');
+      }, 2000);
+    }
+  };
+
+  const handleNextIncorrect = () => {
+    if (incorrectQuestionsRef.current.length === 0) return;
+    const nextIndex = (currentIncorrectIndex + 1) % incorrectQuestionsRef.current.length;
+    setCurrentIncorrectIndex(nextIndex);
+    scrollToQuestion(incorrectQuestionsRef.current[nextIndex].id);
+  };
+
+  const handlePrevIncorrect = () => {
+    if (incorrectQuestionsRef.current.length === 0) return;
+    const prevIndex = (currentIncorrectIndex - 1 + incorrectQuestionsRef.current.length) % incorrectQuestionsRef.current.length;
+    setCurrentIncorrectIndex(prevIndex);
+    scrollToQuestion(incorrectQuestionsRef.current[prevIndex].id);
+  };
 
   const renderAICommentSection = useCallback((question, title) => {
     if (!title) {
@@ -276,15 +325,26 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
 
   const renderQuestions = useCallback((title, titleIndex, sectionIndex) => {
     return title.questions.map((question, questionIndex) => {
-      const hasStudentAnswer = !!question.student_answer?.option_id;
-      const isCorrect = hasStudentAnswer && 
+      const hasAnswer = !!question.student_answer?.option_id;
+      const isCorrect = hasAnswer &&
         question.student_answer?.option_id === question.correct_answer?.option_id;
+      const isIncorrect = question.isIncorrect;
 
       return (
         <div
+          id={`question-${question.testdetail_id}`}
           key={`${question.question_id}-${questionIndex}`}
-          className="bg-white p-4 mb-4 rounded-xl shadow-sm border border-gray-200 hover:bg-gray-50 transition duration-200"
+          className={`bg-white p-4 mb-4 rounded-xl shadow-sm border-2 relative ${isIncorrect
+            ? 'border-red-500 hover:border-red-600'
+            : 'border-gray-200 hover:border-gray-300'
+            } hover:shadow-md transition-all`}
         >
+          {isIncorrect && (
+            <div className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full">
+              <AlertCircle className="w-4 h-4" />
+            </div>
+          )}
+
           <p className="font-semibold text-gray-800 mb-2">
             {sectionIndex + 1}.{titleIndex + 1}.{questionIndex + 1} {question.question_text}
           </p>
@@ -303,7 +363,11 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
                   `}
                 >
                   {option.text}
-                  {isStudent && <span className="ml-2 text-blue-600">(Your answer)</span>}
+                  {isStudent && (
+                    <span className="ml-2 text-blue-600">
+                      {userRole === 'admin' || userRole === 'teacher' ? "(Student's answer)" : "(Your answer)"}
+                    </span>
+                  )}
                   {userRole !== 'student' && isCorrectOption && !isStudent && (
                     <span className="ml-2 text-green-600">(Correct answer)</span>
                   )}
@@ -315,7 +379,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
             })}
           </ul>
 
-          <div className="mt-3 border-t pt-3">
+          <div className="mt-3 border-t border-gray-400 pt-3">
             {renderAICommentSection(question, title)}
           </div>
         </div>
@@ -388,18 +452,47 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
   return (
     <motion.div
       ref={scrollRef}
-      className="border-r border-gray-200 overflow-y-auto max-h-[90vh]"
+      className="border-r border-gray-200 overflow-y-auto max-h-[91vh] relative"
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.4 }}
     >
-      {/* <h3 className="text-lg font-semibold mb-4 text-gray-800 top-0 py-2 z-10">
-        Exam Details
-      </h3> */}
+      <div className="sticky top-0 bg-white z-10 p-4 border-b border-gray-400 flex justify-between items-center">
+
+        <div className="flex items-center justify-center gap-2">
+          <BookOpenCheck className="w-6 h-6 text-gray-800" />
+          <h3 className="text-xl font-semibold text-gray-800">Details</h3>
+        </div>
+
+        {(userRole === 'admin' || userRole === 'teacher') && incorrectQuestionsRef.current.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrevIncorrect}
+              className="p-1 text-gray-600 hover:text-red-600 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center bg-red-50 px-3 py-1 rounded-full">
+              <AlertCircle className="w-4 h-4 text-red-600 mr-1" />
+              <span className="text-sm font-medium">
+                {currentIncorrectIndex + 1}/{incorrectQuestionsRef.current.length}
+              </span>
+            </div>
+
+            <button
+              onClick={handleNextIncorrect}
+              className="p-1 text-gray-600 hover:text-red-600 transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
+        <div className="mx-4 mt-4 p-3 bg-red-50 text-red-700 rounded-md">
           {error.includes('Daily limit') ? (
             <div>
               <p>{error}</p>
@@ -412,20 +505,19 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
       )}
 
       {userRole !== 'admin' && userRole !== 'teacher' && (
-        <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
+        <div className="mx-4 mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
           Analyses available today: <span className="font-bold">{remainingRequests}/5</span>
         </div>
       )}
 
-      <div className="space-y-6">
-        {examDetails.map((section, sectionIndex) => (
+      <div className="p-4 space-y-6">
+        {examDetails?.map((section, sectionIndex) => (
           <motion.div
             key={`${section.section_type}-${sectionIndex}`}
-            className={`p-4 rounded-xl shadow-md ${
-              section.section_type === "READING"
-                ? "bg-blue-50 border-l-4 border-blue-500"
-                : "bg-green-50 border-l-4 border-green-500"
-            }`}
+            className={`p-4 rounded-xl shadow-md ${section.section_type === "READING"
+              ? "bg-blue-50 border-l-4 border-blue-500"
+              : "bg-green-50 border-l-4 border-green-500"
+              }`}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, delay: sectionIndex * 0.1 }}
