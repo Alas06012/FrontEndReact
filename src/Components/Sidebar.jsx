@@ -222,17 +222,29 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                     <FiClipboard className="w-5 h-5" />
                                     <span className="ml-3">Assessments</span>
                                 </NavLink>
-                                
+
                             </li>
                             <li>
                                 <NavLink to="/dashboard/student/studyhome" className={navLinkClass}>
                                     <FiBook className="w-5 h-5" />
                                     <span className="ml-3">Study Materials</span>
                                 </NavLink>
-                                
+
                             </li>
                         </>
                     )}
+
+                    <li>
+                        <a
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSddL-P-I8WuLm4ZXL7xG8p1FpP6pCdMEVuKQPFcMqCs7-U73Q/viewform"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center px-2 py-2 text-md font-medium text-gray-200 hover:text-white hover:bg-[#076a94] rounded-lg transition-colors duration-200"
+                        >
+                            <FiBarChart2 className="w-5 h-5" />
+                            <span className="ml-3">Survey 🙋🏻✏️</span>
+                        </a>
+                    </li>
                 </ul>
 
 
