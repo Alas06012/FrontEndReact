@@ -947,7 +947,20 @@ const Tests = () => {
         {/* Modal for Test Form */}
         <TestFormModal
           isOpen={showDetailsModal}
-          onClose={() => setShowDetailsModal(false)}
+          onClose={() => {
+            Alert({
+              title: 'Are you sure you want to exit?',
+              text: 'If you leave the exam, you will lose one attempt and all your progress.',
+              icon: 'warning',
+              type: 'confirm',
+              confirmButtonText: 'Yes, exit',
+              cancelButtonText: 'Cancel'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                setShowDetailsModal(false);
+              }
+            });
+          }}
           testData={detailsData}
           onSubmit={handleTestSubmit}
           initialTime={7200} // 1 hour
