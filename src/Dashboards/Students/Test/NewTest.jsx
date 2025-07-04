@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "../../../Components/Alert.jsx";
 import { API_URL } from "../../../../config.js";
@@ -8,14 +8,14 @@ import Modal from "../../../Components/Modal.jsx";
 import Pagination from "../../../Components/Pagination.jsx";
 import TestFormModal from "../../../Components/Test/TestFormModal.jsx";
 import TestResultModal from "../../../Components/Test/TestResultModal.jsx";
-import { Plus, Eye, Filter, MessageCircle, MessageSquarePlus, FileSpreadsheet, FileDown, RotateCcw, BarChart2, Edit2, Trash } from "lucide-react";
+import {Eye, RotateCcw, BarChart2 } from "lucide-react";
 import Form from "../../../Components/Form.jsx";
 import ViewExamComments from "../../../Components/Test/ViewExamComments.jsx";
 import ViewExamDetails from "../../../Components/Test/ViewExamDetails.jsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiEdit3 } from "react-icons/fi";
 import ToeicInstructionsModal from "../../../Components/Test/ToeicInstructionsModal.jsx";
-import ToeicFilters from "../../../Components/Test/ToeicFilters.jsx";
+import TestToolbar from "../../../Components/Test/TestToolbar.jsx";
 import StatusBadge from "../../../Components/StatusBadge.jsx";
 import ActionButton from "../../../Components/ActionButton.jsx";
 import TestResult from "../../../Components/TestResult.jsx";
@@ -41,6 +41,8 @@ const Tests = () => {
     user_name: "",
     user_lastname: "",
     level_name: "",
+    start_date: "",
+    end_date: "",
   };
   const [filters, setFilters] = useState(defaultFilters);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -90,11 +92,6 @@ const Tests = () => {
 
   // ---------------------------------------------------------------------------
 
-
-
-  const clearFilters = () => {
-    setFilters(defaultFilters);
-  }
   useEffect(() => {
     applyFilters();
   }, [filters]);
@@ -140,7 +137,7 @@ const Tests = () => {
   };
 
   /**LIMPIAR FILTROS 
-     * ----------------------------------------------------------- */
+  * ----------------------------------------------------------- */
 
   const [filtersCleared, setFiltersCleared] = useState(0); // Usamos un contador
 
@@ -621,13 +618,6 @@ const Tests = () => {
     }
   };
 
-  const handleAddCommentClick = (testId) => {
-    setSelectedTestId(testId);
-    setShowExamModal(true);
-    setIsAddingComment(true);
-    fetchExamAndComments(testId);
-  };
-
   const handleEditCommentClick = (comment) => {
     setSelectedComment(comment);
     setShowEditCommentModal(true);
@@ -782,16 +772,6 @@ const Tests = () => {
   /**
    * ---------------------------------------------------
    */
-
-  const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m
-      .toString()
-      .padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
   const commentFields = [
     {
       name: "comment_title",
@@ -807,119 +787,22 @@ const Tests = () => {
     },
   ];
 
-  // Función para dividir el texto de los speakers en líneas separadas
-  const formatConversation = (text) => {
-    if (!text) return [];
-    // Divide el texto en cada aparición de [SPEAKER_X]
-    const speakerLines = text.split(/(?=\[SPEAKER_[A-Z]\])/);
-    return speakerLines.map((line, index) => (
-      <p key={index} className="mb-1">
-        {line.trim()}
-      </p>
-    ));
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 flex items-center justify-center">
-      <div className="w-full p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 flex">
+      <div className="w-full">
 
-        <h1 className="text-4xl font-bold text-center text-gray-800 tracking-tight">
-          Test Management
-        </h1>
-
-        {/* Filtros + Acciones de filtro */}
-        <div className="bg-gray-50 p-6 rounded-2xl shadow border border-gray-200 space-y-6 mt-10">
-          <h2 className="text-xl font-semibold text-gray-700">Search filters</h2>
-
-          {/* Campos de filtro */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <input
-              type="text"
-              name="user_email"
-              placeholder="Email"
-              value={filters.user_email}
-              onChange={handleFilterChange}
-              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              type="text"
-              name="user_name"
-              placeholder="First Name"
-              value={filters.user_name}
-              onChange={handleFilterChange}
-              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              type="text"
-              name="user_lastname"
-              placeholder="Last Name"
-              value={filters.user_lastname}
-              onChange={handleFilterChange}
-              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <select
-              name="level_name"
-              value={filters.level_name}
-              onChange={handleFilterChange}
-              className="rounded-xl border border-gray-300 px-4 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              <option value="">All Levels</option>
-              {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Botones de filtro */}
-          <div className="flex flex-wrap gap-4 justify-start">
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition"
-            >
-              <Trash className="w-5 h-5" />
-              Clean
-            </button>
-
-            {/* <button
-      onClick={applyFilters}
-      disabled={loading}
-      className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow transition"
-    >
-      <Filter className="w-5 h-5" />
-      Apply
-    </button> */}
-          </div>
-        </div>
-
-        {/* Acciones generales */}
-        <div className="flex flex-wrap gap-4 justify-end mt-10">
-          <button
-            onClick={() => exportToExcel(tests, 'reporte')}
-            className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow transition"
-          >
-            <FileSpreadsheet className="w-5 h-5" />
-            Excel
-          </button>
-
-          <button
-            onClick={() => exportToPDF(tests, 'reporte')}
-            className="flex items-center gap-2 px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl shadow transition"
-          >
-            <FileDown className="w-5 h-5" />
-            PDF
-          </button>
-
-          <button
-            onClick={() => setShowInstructions(true)}
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl shadow-lg transition transform hover:scale-105"
-          >
-            <Plus className="w-5 h-5" />
-            New
-          </button>
-        </div>
+        {/* Filtros y Acciones */}
+        <TestToolbar
+          userRole={userRole}
+          filters={filters}
+          loading={loading}
+          tests={tests}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          onNewTest={() => setShowInstructions(true)}
+          onExportExcel={exportToExcel}
+          onExportPDF={exportToPDF}
+        />
 
         {/* Tabla de resultados */}
         <div className="bg-white p-6 rounded-2xl shadow border border-gray-200 mt-10">
@@ -947,7 +830,20 @@ const Tests = () => {
         {/* Modal for Test Form */}
         <TestFormModal
           isOpen={showDetailsModal}
-          onClose={() => setShowDetailsModal(false)}
+          onClose={() => {
+            Alert({
+              title: 'Are you sure you want to exit?',
+              text: 'If you leave the exam, you will lose one attempt and all your progress.',
+              icon: 'warning',
+              type: 'confirm',
+              confirmButtonText: 'Yes, exit',
+              cancelButtonText: 'Cancel'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                setShowDetailsModal(false);
+              }
+            });
+          }}
           testData={detailsData}
           onSubmit={handleTestSubmit}
           initialTime={7200} // 1 hour

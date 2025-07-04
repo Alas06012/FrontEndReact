@@ -162,7 +162,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                                         <li>
                                             <NavLink to="/dashboard/student/newtest" className={navLinkClass}>
                                                 <FiClipboard className="w-5 h-5" />
-                                                <span className="ml-3">Tests</span>
+                                                <span>Test Management</span>
                                             </NavLink>
                                         </li>
                                     )}
@@ -220,14 +220,14 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                             <li>
                                 <NavLink to="/dashboard/student/newtest" className={navLinkClass}>
                                     <FiClipboard className="w-5 h-5" />
-                                    <span className="ml-3">Assessments</span>
+                                    <span>Test Management</span>
                                 </NavLink>
 
                             </li>
                             <li>
                                 <NavLink to="/dashboard/student/studyhome" className={navLinkClass}>
                                     <FiBook className="w-5 h-5" />
-                                    <span className="ml-3">Study Materials</span>
+                                    <span>Study Materials</span>
                                 </NavLink>
 
                             </li>
