@@ -41,72 +41,90 @@ ChartJS.register(
 );
 // --- Componente Reutilizable y Rediseñado para Secciones de Información ---
 const InfoSection = ({ icon, title, items, color }) => {
-  // Mapeo de estilos mejorado
+  // Mapeo de estilos mejorado, ahora incluye un ícono para la lista
   const colorStyles = {
     green: {
-      bg: "bg-green-50/80 hover:bg-green-50 dark:bg-slate-800/95 dark:hover:bg-slate-800 transition-colors",
+      bg: "bg-green-50/80 hover:bg-green-50 dark:bg-slate-800/95 dark:hover:bg-slate-800",
       iconContainer: "bg-green-100 dark:bg-green-900/50",
       icon: "text-green-600 dark:text-green-400",
       title: "text-green-900 dark:text-green-200",
       text: "text-green-800/90 dark:text-green-100/90",
       border: "ring-green-200 dark:ring-green-900/50",
+      listIcon: CheckCircleIcon, // Icono para las listas verdes
     },
     red: {
-      bg: "bg-red-50/80 hover:bg-red-50 dark:bg-slate-800/95 dark:hover:bg-slate-800 transition-colors",
+      bg: "bg-red-50/80 hover:bg-red-50 dark:bg-slate-800/95 dark:hover:bg-slate-800",
       iconContainer: "bg-red-100 dark:bg-red-900/50",
       icon: "text-red-600 dark:text-red-400",
       title: "text-red-900 dark:text-red-200",
       text: "text-red-800/90 dark:text-red-100/90",
       border: "ring-red-200 dark:ring-red-900/50",
+      listIcon: XCircleIcon, // Icono para las listas rojas
     },
     blue: {
-      bg: "bg-blue-50/80 hover:bg-blue-50 dark:bg-slate-800/95 dark:hover:bg-slate-800 transition-colors transition-colors",
+      bg: "bg-blue-50/80 hover:bg-blue-50 dark:bg-slate-800/95 dark:hover:bg-slate-800",
       iconContainer: "bg-blue-100 dark:bg-blue-900/50",
       icon: "text-blue-600 dark:text-blue-400",
       title: "text-blue-900 dark:text-blue-200",
       text: "text-blue-800/90 dark:text-blue-100/90",
       border: "ring-blue-200 dark:ring-blue-900/50",
+      listIcon: LightBulbIcon, // Icono para las listas azules
     },
   };
 
   const styles = colorStyles[color] || colorStyles.blue;
+  const ListItemIcon = styles.listIcon; // Asigna el componente del icono a una variable
+
+  // Variantes para las animaciones
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 },
+  };
 
   return (
-    <div
-      className={`shadow-lg rounded-xl p-6 ring-1 ${styles.border} flex flex-col h-full ${styles.bg} transition-all hover:shadow-md hover:-translate-y-0.5`}
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className={`shadow-lg rounded-xl p-6 ring-1 ${styles.border} flex flex-col h-full ${styles.bg} transition-all hover:shadow-xl hover:-translate-y-1`}
     >
       {/* Encabezado de la tarjeta */}
-      <div className="flex items-center mb-4">
-        <div
-          className={`flex-shrink-0 p-3 rounded-lg ${styles.iconContainer} transition-colors`}
-        >
-          {React.cloneElement(icon, { 
-            className: `h-6 w-6 ${styles.icon} transition-colors`,
-            "aria-hidden": true 
+      <motion.div variants={itemVariants} className="flex items-center mb-4">
+        <div className={`flex-shrink-0 p-3 rounded-lg ${styles.iconContainer}`}>
+          {React.cloneElement(icon, {
+            className: `h-6 w-6 ${styles.icon}`,
+            "aria-hidden": true
           })}
         </div>
-        <h3 className={`ml-4 text-lg font-semibold ${styles.title} transition-colors`}>
+        <h3 className={`ml-4 text-lg font-semibold ${styles.title}`}>
           {title}
         </h3>
-      </div>
+      </motion.div>
 
       {/* Cuerpo de la tarjeta */}
-      <div className="flex-grow">
+      <motion.div variants={itemVariants} className="flex-grow">
         {items && items.length > 0 ? (
-          <div className={`space-y-3 ${styles.text} leading-relaxed transition-colors`}>
+          <ul className="space-y-3">
             {items.map((item, index) => (
-              <>
-              {item}
-              </>
+              <li key={index} className="flex items-start gap-3">
+                <ListItemIcon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${styles.icon}`} />
+                <span className={`text-sm ${styles.text} leading-relaxed`}>
+                  {item}
+                </span>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
-          <p className={`text-sm italic ${styles.text} opacity-70 transition-colors`}>
+          <p className={`text-sm italic ${styles.text} opacity-70`}>
             No hay datos disponibles por el momento.
           </p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
@@ -129,6 +147,8 @@ function StudentDashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = await response.json();
+
+        console.log(result)
 
         if (response.status === 404 && result.data === false) {
           setDashboardData(null);
@@ -199,7 +219,7 @@ function StudentDashboard() {
   // --- Procesamiento y Configuración de Datos ---
   const motivationalMessage =
     motivationalMessages[
-      Math.floor(Math.random() * motivationalMessages.length)
+    Math.floor(Math.random() * motivationalMessages.length)
     ];
   const stats = [
     {
@@ -231,12 +251,18 @@ function StudentDashboard() {
   const progressData = {
     labels: dashboardData.test_history
       .slice(-7)
-      .map((item) =>
-        new Date(item.date).toLocaleDateString("es-ES", {
+      .map((item) => {
+        // 1. Descomponemos la fecha "DD MM YYYY" en un array
+        const parts = item.date.split(' '); // -> ["16", "06", "2025"]
+        // 2. Reordenamos al formato YYYY-MM-DD que SÍ es estándar
+        const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // -> "2025-06-16"
+
+        // 3. Ahora sí, creamos la fecha y la formateamos para mostrar
+        return new Date(formattedDate).toLocaleDateString("es-ES", {
           day: "2-digit",
           month: "short",
-        })
-      ),
+        });
+      }),
     datasets: [
       {
         label: "Puntaje",
