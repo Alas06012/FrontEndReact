@@ -96,7 +96,7 @@ const TestToolbar = ({
                                         placeholder="Student´s Email"
                                         value={filters.user_email}
                                         onChange={onFilterChange}
-                                        className="w-full bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     />
                                     <input
                                         type="text"
@@ -104,7 +104,7 @@ const TestToolbar = ({
                                         placeholder="Name"
                                         value={filters.user_name}
                                         onChange={onFilterChange}
-                                        className="w-full bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     />
                                     <input
                                         type="text"
@@ -112,19 +112,54 @@ const TestToolbar = ({
                                         placeholder="Lastname"
                                         value={filters.user_lastname}
                                         onChange={onFilterChange}
-                                        className="w-full bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     />
                                     <select
                                         name="level_name"
                                         value={filters.level_name}
                                         onChange={onFilterChange}
-                                        className="w-full bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     >
                                         <option value="">All Levels</option>
                                         {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
                                             <option key={level} value={level}>{level}</option>
                                         ))}
                                     </select>
+
+                                    <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                                        <div>
+                                            {/* Nuevo filtro de Status */}
+                                            <span className="text-sm">Status:</span>
+                                            <select
+                                                name="status"
+                                                value={filters.status  || ""}
+                                                onChange={onFilterChange}
+                                                className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="">All</option>
+                                                <option value="IN_PROGRESS">In Progress</option>
+                                                <option value="COMPLETED">Completed</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            {/* Nuevo filtro de Results */}
+                                            <span className="text-sm">Result:</span>
+                                            <select
+                                                name="test_passed"
+                                                value={filters.test_passed  || ""}
+                                                onChange={onFilterChange}
+                                                className="w-full bg-slate-700/50 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="">All</option>
+                                                <option value="0">Failed</option>
+                                                <option value="1">Passed</option>
+                                            </select>
+                                        </div>
+
+                                    </div>
+
+
                                     {/* Rango de Fechas */}
                                     <div className="lg:col-span-2 grid grid-cols-2 gap-4">
                                         <div>

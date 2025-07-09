@@ -1,9 +1,9 @@
 // Componente de estado visual
 const StatusBadge = ({ status }) => {
   const statusConfig = {
-    COMPLETED: { color: 'bg-green-100 text-green-800', label: 'Completado' },
-    PENDING: { color: 'bg-yellow-100 text-yellow-800', label: 'Pendiente' },
-    IN_PROGRESS: { color: 'bg-blue-100 text-blue-800', label: 'En progreso' },
+    COMPLETED: { color: 'bg-green-100 text-green-800', label: 'Completed' },
+    PENDING: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
+    IN_PROGRESS: { color: 'bg-blue-100 text-blue-800', label: 'In Progress' },
     default: { color: 'bg-gray-100 text-gray-800', label: status }
   };
 
