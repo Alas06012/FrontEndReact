@@ -43,6 +43,8 @@ const Tests = () => {
     level_name: "",
     start_date: "",
     end_date: "",
+    status: null, 
+    test_passed: null 
   };
   const [filters, setFilters] = useState(defaultFilters);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -148,7 +150,9 @@ const Tests = () => {
       user_lastname: "",
       level_name: "",
       start_date: "",
-      end_date: ""
+      end_date: "",
+      status: null,
+      test_passed: null
     });
     setFiltersCleared(prev => prev + 1); // Incrementamos el contador
   };
@@ -747,7 +751,7 @@ const Tests = () => {
             color="info"
             disabled={row.status !== "COMPLETED"}
             onClick={() => row.status === "COMPLETED" && handleViewResult(row.pk_test)}
-            tooltip={row.status === "COMPLETED" ? "Ver resultados" : "Result not available"}
+            tooltip={row.status === "COMPLETED" ? "View result" : "Result not available"}
           />
 
           <ActionButton
