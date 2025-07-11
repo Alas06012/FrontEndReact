@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Alert from '../../../Components/Alert.jsx';
 import { API_URL } from '/config.js';
@@ -7,7 +7,8 @@ import Form from '../../../Components/Form.jsx';
 import Table from '../../../Components/Table.jsx';
 import Modal from '../../../Components/Modal.jsx';
 import Pagination from '../../../Components/Pagination.jsx';
-import { Plus, Edit, CheckCircle, Search, XCircle } from 'lucide-react';
+import AIGeneratorModal from './AIContentGenerator.jsx';
+import { BrainCircuit, Plus, Edit, CheckCircle, Search, XCircle } from 'lucide-react';
 
 const TitlesAdmin = () => {
   const [titles, setTitles] = useState([]);
@@ -26,6 +27,18 @@ const TitlesAdmin = () => {
   const filterFormRef = useRef();
   const navigate = useNavigate();
   const token = getAccessToken();
+
+  //---------------------------------------
+  //
+  //  GENERACION DE CONTENIDO CON IA
+  //
+  //---------------------------------------
+  const [showGeneratorModal, setShowGeneratorModal] = useState(false);
+  // Se ejecuta cuando el contenido de la IA se guarda exitosamente
+  const handleSaveSuccess = () => {
+    setShowGeneratorModal(false); // Cierra el modal
+    fetchTitles(); // Refresca la tabla de títulos
+  };
 
   const showAlert = (text, icon = 'success') => {
     Alert({
@@ -276,12 +289,19 @@ const TitlesAdmin = () => {
           />
         </div>
 
-        <div className="mb-6 text-center">
+        <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={() => { setEditTitle(null); setShowModal(true); }}
-            className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2 mx-auto"
+            className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2"
           >
-            <Plus className="h-5 w-5" /> Create Title
+            <Plus className="h-5 w-5" /> Create Title Manually
+          </button>
+
+          <button
+            onClick={() => setShowGeneratorModal(true)} // Solo abre el modal
+            className="py-2 px-4 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 transition duration-300 flex items-center gap-2"
+          >
+            <BrainCircuit className="h-5 w-5" /> Generate with AI
           </button>
         </div>
 
@@ -299,6 +319,7 @@ const TitlesAdmin = () => {
           }}
         />
 
+        {/* Modal de edición manual*/}
         <Modal isOpen={showModal} onClose={() => { setShowModal(false); setEditTitle(null); }} title={editTitle ? 'Edit Título' : 'Crear Título'}>
           <Form
             fields={formFields}
@@ -319,6 +340,32 @@ const TitlesAdmin = () => {
             layout="grid-cols-1"
           />
         </Modal>
+
+
+        {/* Modal de generacion de contenido con IA */}
+        <AIGeneratorModal
+          isOpen={showGeneratorModal}
+          onClose={(showConfirmation = true) => {
+            if (showConfirmation) {
+              Alert({
+                title: 'Are you sure you want to exit?',
+                icon: 'warning',
+                type: 'confirm',
+                confirmButtonText: 'Yes, exit',
+                cancelButtonText: 'Cancel'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  setShowGeneratorModal(false);
+                }
+              });
+            } else {
+              setShowGeneratorModal(false);
+            }
+          }}
+          onSaveSuccess={handleSaveSuccess}
+        />
+
+
       </div>
     </div>
   );
