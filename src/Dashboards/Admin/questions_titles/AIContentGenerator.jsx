@@ -19,7 +19,8 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
     const [generationFormData, setGenerationFormData] = useState({
         level_fk: '',
         title_type: 'READING',
-        toeic_section_fk: ''
+        toeic_section_fk: '',
+        topic : ''
     });
     const [filteredToeicSections, setFilteredToeicSections] = useState([]);
 
@@ -108,8 +109,8 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
         e.preventDefault();
 
         // Valida que los campos requeridos estén llenos
-        if (!generationFormData.level_fk || !generationFormData.title_type || !generationFormData.toeic_section_fk) {
-            showAlert('Please select level, type, and section before proceeding.', 'error');
+        if (!generationFormData.level_fk || !generationFormData.title_type || !generationFormData.toeic_section_fk || !generationFormData.topic) {
+            showAlert('Please select level, type, section and topic before proceeding.', 'error');
             return;
         }
 
@@ -321,6 +322,20 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Topic
+                            </label>
+                            <input
+                                name="topic"
+                                value={generationFormData.topic}
+                                placeholder='Food, Books, Cinema...'
+                                onChange={handleFormChange}
+                                required
+                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                            </input>
                         </div>
                     </div>
 
