@@ -333,6 +333,16 @@ const StudyHome = () => {
           />
         )}
       </div>
+      <df-messenger
+        location="us-east1"
+        project-id="necdiagnostics-tesis"
+        agent-id="74180c1b-a688-4176-a28d-a82b260e5c7e"
+        language-code="es"
+        max-query-length="-1">
+        <df-messenger-chat-bubble
+          chat-title="NECBot">
+        </df-messenger-chat-bubble>
+      </df-messenger>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { API_URL } from '/config.js';
 import { FiMail, FiLock, FiCheckCircle, FiRefreshCw } from "react-icons/fi";
 import { motion } from "framer-motion";
 
-const TIMER_DURATION = 150; // 3 minutes
+const TIMER_DURATION = 15; // 15 seconds
 
 export default function VerifyCode() {
     const [email, setEmail] = useState('');

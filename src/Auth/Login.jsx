@@ -37,9 +37,9 @@ export default function Login() {
         if (lockTimestamp) {
             const now = Date.now();
             const lockTime = parseInt(lockTimestamp, 10);
-            if (now < lockTime + 15 * 60 * 1000) {
+            if (now < lockTime + 30 * 1000) { // 30 segundos
                 setIsLocked(true);
-                setLockoutTime(lockTime + 15 * 60 * 1000);
+                setLockoutTime(lockTime + 30 * 1000);
             } else {
                 localStorage.removeItem('loginAttempts');
                 localStorage.removeItem('lockTimestamp');
@@ -94,10 +94,10 @@ export default function Login() {
                     const timestamp = Date.now();
                     localStorage.setItem('lockTimestamp', timestamp.toString());
                     setIsLocked(true);
-                    setLockoutTime(timestamp + 15 * 60 * 1000);
+                    setLockoutTime(timestamp + 30 * 1000);
                     Alert({
                         title: 'Too many attempts',
-                        text: 'You have been locked out for 15 minutes.',
+                        text: 'You have been locked out for 30 seconds.',
                         icon: 'warning',
                         background: '#4b7af0',
                         color: 'white',
