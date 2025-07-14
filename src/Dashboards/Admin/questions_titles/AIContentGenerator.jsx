@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence} from 'framer-motion';
 import { API_URL } from '/config.js';
 import { getAccessToken } from '../../../Utils/auth.js';
 
 import Modal from '../../../Components/Modal.jsx';
 import Alert from '../../../Components/Alert.jsx';
-import { BrainCircuit, Loader2, ChevronLeft, Save, Wand2 } from 'lucide-react';
+import { BrainCircuit, Loader2, ChevronLeft, Save, Wand2, ChevronDown } from 'lucide-react';
 
 const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
     const [isLoadingAI, setIsLoadingAI] = useState(false);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [generatedContent, setGeneratedContent] = useState(null);
     const [mcerLevels, setMcerLevels] = useState([]);
     const [toeicSections, setToeicSections] = useState([]);
@@ -20,7 +21,7 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
         level_fk: '',
         title_type: 'READING',
         toeic_section_fk: '',
-        topic : ''
+        topic: ''
     });
     const [filteredToeicSections, setFilteredToeicSections] = useState([]);
 
@@ -403,80 +404,167 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                 value={generatedContent.title_test}
                                 onChange={handleContentChange}
                                 rows="8"
+                                placeholder={
+                                    generationParams.title_type === 'LISTENING'
+                                        ? "default: Context description\nperson 1: Dialogue...\nperson 2: Response..."
+                                        : "Write content here"
+                                }
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                             />
-                        </div>
-
-                        <div className="border-t pt-4">
-                            <h3 className="text-lg font-semibold mb-4">Questions</h3>
-                            <div className="space-y-4">
-                                {generatedContent.questions.map((q, qIndex) => (
+                            {generationParams.title_type === 'LISTENING' && (
+                                <div className="mt-2">
                                     <motion.div
-                                        key={qIndex}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: qIndex * 0.05 }}
-                                        className="p-4 border border-gray-200 rounded-lg space-y-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+                                        initial={false}
+                                        animate={{
+                                            backgroundColor: isHelpOpen ? '#f0f9ff' : '#eff6ff',
+                                            borderColor: isHelpOpen ? '#93c5fd' : '#dbeafe'
+                                        }}
+                                        className="p-3 rounded-lg border cursor-pointer"
+                                        onClick={() => setIsHelpOpen(!isHelpOpen)}
                                     >
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Question {qIndex + 1}
-                                        </label>
-                                        <textarea
-                                            name="question_text"
-                                            value={q.question_text}
-                                            onChange={(e) => handleContentChange(e, qIndex)}
-                                            rows="2"
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                                        />
-                                        <div className="space-y-2 mt-3">
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Answers (select the correct one)
-                                            </label>
-                                            {q.answers.map((ans, aIndex) => (
-                                                <div
-                                                    key={aIndex}
-                                                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                        <motion.div
+                                            className="flex items-center justify-between"
+                                            initial={false}
+                                        >
+                                            <span className="font-medium text-gray-700">
+                                                Format required for LISTENING
+                                            </span>
+                                            <motion.div
+                                                animate={{ rotate: isHelpOpen ? 180 : 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <ChevronDown className="h-4 w-4 text-gray-500" />
+                                            </motion.div>
+                                        </motion.div>
+
+                                        <AnimatePresence>
+                                            {isHelpOpen && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{
+                                                        height: "auto",
+                                                        opacity: 1,
+                                                        transition: {
+                                                            height: { duration: 0.3 },
+                                                            opacity: { duration: 0.2, delay: 0.1 }
+                                                        }
+                                                    }}
+                                                    exit={{
+                                                        height: 0,
+                                                        opacity: 0,
+                                                        transition: {
+                                                            height: { duration: 0.2 },
+                                                            opacity: { duration: 0.1 }
+                                                        }
+                                                    }}
+                                                    className="overflow-hidden"
                                                 >
-                                                    <input
-                                                        type="radio"
-                                                        name={`is_correct_${qIndex}`}
-                                                        checked={ans.is_correct}
-                                                        onChange={(e) => handleContentChange(e, qIndex, aIndex)}
-                                                        className="h-4 w-4 text-purple-600 focus:ring-purple-500"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        name="answer_text"
-                                                        value={ans.answer_text}
-                                                        onChange={(e) => handleContentChange(e, qIndex, aIndex)}
-                                                        className="flex-grow px-3 py-1.5 rounded-md border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
+                                                    <div className="mt-3 pt-3 border-t border-blue-100 space-y-2">
+                                                        <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                                                            <li>Start by defining actors with the format:</li>
+                                                            <ul className="list-[circle] pl-5 mt-1 space-y-1">
+                                                                <li>person 1: Male voice</li>
+                                                                <li>person 2: Female voice</li>
+                                                                <li>person 3: Female voice</li>
+                                                                <li>person 4: Male voice</li>
+                                                            </ul>
+                                                            <li>Use <code className="bg-blue-100 px-1 rounded text-indigo-800">default</code> for narrator</li>
+                                                            <li>In the script, each line must start with the actor's name</li>
+                                                        </ul>
+
+                                                        <motion.div
+                                                            className="mt-3 p-2 bg-white border rounded text-xs"
+                                                            initial={{ y: -10, opacity: 0 }}
+                                                            animate={{
+                                                                y: 0,
+                                                                opacity: 1,
+                                                                transition: { delay: 0.2 }
+                                                            }}
+                                                        >
+                                                            <p className="font-medium text-gray-700">Example:</p>
+                                                            <pre className="whitespace-pre-wrap mt-1 text-gray-700 text-xs">
+                                                                {`default: Three friends discuss weekend plans\nperson 1: Hey Sarah and Emma, do you have any plans?\nperson 2: Not really, Tom. I was thinking of relaxing...`}
+                                                            </pre>
+                                                        </motion.div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </motion.div>
-                                ))}
+                                </div>
+                            )}
+
+                            <div className="border-t pt-3 mt-3 border-slate-500">
+                                <h3 className="text-lg font-semibold mb-4">Questions</h3>
+                                <div className="space-y-4">
+                                    {generatedContent.questions.map((q, qIndex) => (
+                                        <motion.div
+                                            key={qIndex}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: qIndex * 0.05 }}
+                                            className="p-4 border border-gray-200 rounded-lg space-y-3 bg-white shadow-sm hover:shadow-md transition-shadow"
+                                        >
+                                            <label className="block text-sm font-medium text-gray-700">
+                                                Question {qIndex + 1}
+                                            </label>
+                                            <textarea
+                                                name="question_text"
+                                                value={q.question_text}
+                                                onChange={(e) => handleContentChange(e, qIndex)}
+                                                rows="2"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                            />
+                                            <div className="space-y-2 mt-3">
+                                                <label className="block text-sm font-medium text-gray-700">
+                                                    Answers (select the correct one)
+                                                </label>
+                                                {q.answers.map((ans, aIndex) => (
+                                                    <div
+                                                        key={aIndex}
+                                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`is_correct_${qIndex}`}
+                                                            checked={ans.is_correct}
+                                                            onChange={(e) => handleContentChange(e, qIndex, aIndex)}
+                                                            className="h-4 w-4 text-purple-600 focus:ring-purple-500"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            name="answer_text"
+                                                            value={ans.answer_text}
+                                                            onChange={(e) => handleContentChange(e, qIndex, aIndex)}
+                                                            className="flex-grow px-3 py-1.5 rounded-md border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="sticky bottom-0 bg-white pt-4 border-t border-slate-400 flex justify-end gap-3">
-                        <button
-                            onClick={() => setGeneratedContent(null)}
-                            className="flex items-center gap-2 px-5 py-2 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Regenerate
-                        </button>
-                        <motion.button
-                            onClick={handleSaveQuiz}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:shadow-md transition-all"
-                        >
-                            <Save className="h-4 w-4" />
-                            Save Content
-                        </motion.button>
+                        <div className="sticky bottom-0 bg-white pt-4 border-t border-slate-400 flex justify-end gap-3">
+                            <button
+                                onClick={() => setGeneratedContent(null)}
+                                className="flex items-center gap-2 px-5 py-2 text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-all"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                                Regenerate
+                            </button>
+                            <motion.button
+                                onClick={handleSaveQuiz}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:shadow-md transition-all"
+                            >
+                                <Save className="h-4 w-4" />
+                                Save Content
+                            </motion.button>
+                        </div>
                     </div>
                 </motion.div>
             )}

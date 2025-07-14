@@ -61,6 +61,88 @@ const TitleForm = ({ onSubmit, initialData, onCancel }) => {
           required
           className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
+        {form.type === 'LISTENING' && (
+          <div className="mt-2">
+            <motion.div
+              initial={false}
+              animate={{
+                backgroundColor: isHelpOpen ? '#f0f9ff' : '#eff6ff',
+                borderColor: isHelpOpen ? '#93c5fd' : '#dbeafe'
+              }}
+              className="p-3 rounded-lg border cursor-pointer"
+              onClick={() => setIsHelpOpen(!isHelpOpen)}
+            >
+              <motion.div
+                className="flex items-center justify-between"
+                initial={false}
+              >
+                <span className="font-medium text-gray-700">
+                  Format required for LISTENING
+                </span>
+                <motion.div
+                  animate={{ rotate: isHelpOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </motion.div>
+              </motion.div>
+
+              <AnimatePresence>
+                {isHelpOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{
+                      height: "auto",
+                      opacity: 1,
+                      transition: {
+                        height: { duration: 0.3 },
+                        opacity: { duration: 0.2, delay: 0.1 }
+                      }
+                    }}
+                    exit={{
+                      height: 0,
+                      opacity: 0,
+                      transition: {
+                        height: { duration: 0.2 },
+                        opacity: { duration: 0.1 }
+                      }
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 pt-3 border-t border-blue-100 space-y-2">
+                      <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                        <li>Start by defining actors with the format:</li>
+                        <ul className="list-[circle] pl-5 mt-1 space-y-1">
+                          <li>person 1: Male voice</li>
+                          <li>person 2: Female voice</li>
+                          <li>person 3: Female voice</li>
+                          <li>person 4: Male voice</li>
+                        </ul>
+                        <li>Use <code className="bg-blue-100 px-1 rounded text-indigo-800">default</code> for narrator</li>
+                        <li>In the script, each line must start with the actor's name</li>
+                      </ul>
+
+                      <motion.div
+                        className="mt-3 p-2 bg-white border rounded text-xs"
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{
+                          y: 0,
+                          opacity: 1,
+                          transition: { delay: 0.2 }
+                        }}
+                      >
+                        <p className="font-medium text-gray-700">Example:</p>
+                        <pre className="whitespace-pre-wrap mt-1 text-gray-700 text-xs">
+                          {`default: Three friends discuss weekend plans\nperson 1: Hey Sarah and Emma, do you have any plans?\nperson 2: Not really, Tom. I was thinking of relaxing...`}
+                        </pre>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        )}
       </div>
       <div>
         <label htmlFor="type" className="block text-gray-700 font-semibold">Tipo</label>
