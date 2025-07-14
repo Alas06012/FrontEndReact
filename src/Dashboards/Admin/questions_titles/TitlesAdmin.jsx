@@ -290,18 +290,18 @@ const TitlesAdmin = () => {
         </div>
 
         <div className="flex justify-center gap-4 mb-6">
-          <button
+          {/* <button
             onClick={() => { setEditTitle(null); setShowModal(true); }}
             className="py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition duration-300 flex items-center gap-2"
           >
             <Plus className="h-5 w-5" /> Create Title Manually
-          </button>
+          </button> */}
 
           <button
             onClick={() => setShowGeneratorModal(true)} // Solo abre el modal
             className="py-2 px-4 bg-purple-600 text-white font-semibold rounded-md hover:bg-purple-700 transition duration-300 flex items-center gap-2"
           >
-            <BrainCircuit className="h-5 w-5" /> Generate with AI
+            <BrainCircuit className="h-5 w-5" /> Generate New Quiz AI/Manually
           </button>
         </div>
 
