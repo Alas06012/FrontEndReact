@@ -234,7 +234,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                         </>
                     )}
 
-                    <li>
+                    {/* <li>
                         <a
                             href="https://docs.google.com/forms/d/e/1FAIpQLSddL-P-I8WuLm4ZXL7xG8p1FpP6pCdMEVuKQPFcMqCs7-U73Q/viewform"
                             target="_blank"
@@ -244,7 +244,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, userRole }) => {
                             <FiBarChart2 className="w-5 h-5" />
                             <span className="ml-3">Survey 🙋🏻✏️</span>
                         </a>
-                    </li>
+                    </li> */}
                 </ul>
 
 

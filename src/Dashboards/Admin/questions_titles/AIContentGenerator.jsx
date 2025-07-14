@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence} from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '/config.js';
 import { getAccessToken } from '../../../Utils/auth.js';
 
@@ -15,6 +15,47 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
     const [toeicSections, setToeicSections] = useState([]);
     const [generationParams, setGenerationParams] = useState(null);
     const token = getAccessToken();
+    const [validationErrors, setValidationErrors] = useState([]);
+
+    const validateContent = () => {
+        const errors = [];
+
+        if (!generatedContent.title_name.trim()) {
+            errors.push({ field: 'title_name', message: 'Title name is required' });
+        }
+
+        if (!generatedContent.title_test.trim()) {
+            errors.push({ field: 'title_test', message: 'Content is required' });
+        }
+
+        generatedContent.questions.forEach((question, qIndex) => {
+            if (!question.question_text.trim()) {
+                errors.push({
+                    field: `question_${qIndex}_text`,
+                    message: `Question ${qIndex + 1} text is required`
+                });
+            }
+
+            const correctAnswers = question.answers.filter(a => a.is_correct).length;
+            if (correctAnswers !== 1) {
+                errors.push({
+                    field: `question_${qIndex}_correct`,
+                    message: `Question ${qIndex + 1} must have exactly one correct answer`
+                });
+            }
+
+            question.answers.forEach((answer, aIndex) => {
+                if (!answer.answer_text.trim()) {
+                    errors.push({
+                        field: `question_${qIndex}_answer_${aIndex}`,
+                        message: `Answer ${aIndex + 1} for question ${qIndex + 1} is required`
+                    });
+                }
+            });
+        });
+
+        return errors.length === 0 ? true : errors;
+    };
 
     // Form state
     const [generationFormData, setGenerationFormData] = useState({
@@ -122,12 +163,17 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
             title_type: generationFormData.title_type,
             questions: Array.from({ length: 4 }, () => ({
                 question_text: '',
-                answers: Array.from({ length: 4 }, (v, i) => ({
+                answers: Array.from({ length: 4 }, () => ({
                     answer_text: '',
-                    is_correct: i === 0 // Marca la primera respuesta como correcta por defecto
+                    is_correct: false // Todas comienzan como falsas
                 }))
             }))
         };
+        // Marcamos la primera respuesta como correcta en las 4 preguntas
+        manualTemplate.questions[0].answers[0].is_correct = true;
+        manualTemplate.questions[1].answers[0].is_correct = true;
+        manualTemplate.questions[2].answers[0].is_correct = true;
+        manualTemplate.questions[3].answers[0].is_correct = true;
 
         // Guarda los parámetros y establece el contenido vacío para mostrar el editor
         setGenerationParams(generationFormData);
@@ -168,13 +214,29 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
 
     const handleSaveQuiz = async () => {
         if (!generatedContent || !generationParams) return;
+
+        const validationResult = validateContent();
+        if (validationResult !== true) {
+            setValidationErrors(validationResult);
+
+            // Mostrar el primer error
+            if (validationResult.length > 0) {
+                showAlert(validationResult[0].message, 'error');
+            }
+
+            return;
+        }
+
+        setValidationErrors([]);
         setIsLoadingAI(true);
+
         try {
             const payload = {
                 quiz_data: generatedContent,
                 level_fk: generationParams.level_fk,
                 toeic_section_fk: generationParams.toeic_section_fk,
             };
+
             const response = await fetch(`${API_URL}/ai/save-quiz`, {
                 method: 'POST',
                 headers: {
@@ -183,8 +245,10 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                 },
                 body: JSON.stringify(payload),
             });
+
             const result = await response.json();
             setIsLoadingAI(false);
+
             if (response.ok) {
                 showAlert('Content saved successfully!');
                 handleClose(false);
@@ -199,19 +263,27 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
     };
 
     const handleContentChange = (e, questionIndex = null, answerIndex = null) => {
-        const { name, value } = e.target;
+        const { name, value, type } = e.target;
+
         setGeneratedContent(prev => {
             const newContent = JSON.parse(JSON.stringify(prev));
+
             if (questionIndex === null) {
+                // Cambio en el título o contenido principal
                 newContent[name] = value;
             } else if (answerIndex === null) {
+                // Cambio en el texto de la pregunta
                 newContent.questions[questionIndex][name] = value;
             } else {
                 if (name === 'is_correct') {
-                    newContent.questions[questionIndex].answers.forEach((ans, idx) => {
-                        ans.is_correct = (idx === answerIndex);
+                    // Reset all answers to false first
+                    newContent.questions[questionIndex].answers.forEach(ans => {
+                        ans.is_correct = false;
                     });
+                    // Set only the selected answer to true
+                    newContent.questions[questionIndex].answers[answerIndex].is_correct = true;
                 } else {
+                    // Cambio en el texto de una respuesta
                     newContent.questions[questionIndex].answers[answerIndex][name] = value;
                 }
             }
@@ -391,8 +463,10 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                 name="title_name"
                                 value={generatedContent.title_name}
                                 onChange={handleContentChange}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
+                                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all ${validationErrors.some(e => e.field === 'title_name')
+                                    ? 'border-red-500 bg-red-50'
+                                    : 'border-gray-300'
+                                    }`} />
                         </div>
 
                         <div>
@@ -409,8 +483,10 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                         ? "default: Context description\nperson 1: Dialogue...\nperson 2: Response..."
                                         : "Write content here"
                                 }
-                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                            />
+                                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all ${validationErrors.some(e => e.field === 'title_name')
+                                    ? 'border-red-500 bg-red-50'
+                                    : 'border-gray-300'
+                                    }`} />
                             {generationParams.title_type === 'LISTENING' && (
                                 <div className="mt-2">
                                     <motion.div
@@ -513,8 +589,10 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                                 value={q.question_text}
                                                 onChange={(e) => handleContentChange(e, qIndex)}
                                                 rows="2"
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                                            />
+                                                className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all ${validationErrors.some(e => e.field === 'title_name')
+                                                    ? 'border-red-500 bg-red-50'
+                                                    : 'border-gray-300'
+                                                    }`} />
                                             <div className="space-y-2 mt-3">
                                                 <label className="block text-sm font-medium text-gray-700">
                                                     Answers (select the correct one)
@@ -528,7 +606,16 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                                             type="radio"
                                                             name={`is_correct_${qIndex}`}
                                                             checked={ans.is_correct}
-                                                            onChange={(e) => handleContentChange(e, qIndex, aIndex)}
+                                                            onChange={() => {
+                                                                // Creamos un evento sintético para mantener la misma interfaz
+                                                                const syntheticEvent = {
+                                                                    target: {
+                                                                        name: 'is_correct',
+                                                                        value: true
+                                                                    }
+                                                                };
+                                                                handleContentChange(syntheticEvent, qIndex, aIndex);
+                                                            }}
                                                             className="h-4 w-4 text-purple-600 focus:ring-purple-500"
                                                         />
                                                         <input
@@ -536,8 +623,10 @@ const AIGeneratorModal = ({ isOpen, onClose, onSaveSuccess }) => {
                                                             name="answer_text"
                                                             value={ans.answer_text}
                                                             onChange={(e) => handleContentChange(e, qIndex, aIndex)}
-                                                            className="flex-grow px-3 py-1.5 rounded-md border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                                                        />
+                                                            className={`w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all ${validationErrors.some(e => e.field === 'title_name')
+                                                                ? 'border-red-500 bg-red-50'
+                                                                : 'border-gray-300'
+                                                                }`} />
                                                     </div>
                                                 ))}
                                             </div>
