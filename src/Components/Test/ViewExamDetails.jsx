@@ -154,7 +154,8 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
           if (hasAnswer) answeredQuestions++;
           if (isCorrect) correctAnswers++;
 
-          if ((userRole === 'admin' || userRole === 'teacher') && hasAnswer && !isCorrect) {
+          // (userRole === 'admin' || userRole === 'teacher') && hasAnswer && !isCorrect ----FORMA ANTERIOR POR ROL
+          if (hasAnswer && !isCorrect) {
             incorrectQuestionsRef.current.push({
               id: question.testdetail_id,
               section: section.section_desc,
@@ -176,9 +177,13 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
               return {
                 ...question,
                 ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null,
-                isIncorrect: (userRole === 'admin' || userRole === 'teacher') &&
-                  !!question.student_answer?.option_id &&
-                  question.student_answer?.option_id !== question.correct_answer?.option_id
+              //   isIncorrect: (userRole === 'admin' || userRole === 'teacher') &&
+              //     !!question.student_answer?.option_id &&
+              //     question.student_answer?.option_id !== question.correct_answer?.option_id
+              // 
+              isIncorrect: !!question.student_answer?.option_id &&
+              question.student_answer?.option_id !== question.correct_answer?.option_id
+            
               };
             } catch (e) {
               console.error('Error parsing AI comments:', e);
@@ -465,7 +470,8 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
           <h3 className="text-xl font-semibold text-gray-800">Details</h3>
         </div>
 
-        {(userRole === 'admin' || userRole === 'teacher') && incorrectQuestionsRef.current.length > 0 && (
+        {/* (userRole === 'admin' || userRole === 'teacher') && incorrectQuestionsRef.current.length > 0 &&*/}
+        { incorrectQuestionsRef.current.length > 0 && (
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrevIncorrect}
