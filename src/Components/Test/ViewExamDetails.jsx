@@ -512,7 +512,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
 
       {userRole !== 'admin' && userRole !== 'teacher' && (
         <div className="mx-4 mt-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-          Analyses available today: <span className="font-bold">{remainingRequests}/5</span>
+          Analyses available today: <span className="font-bold">{remainingRequests}</span>
         </div>
       )}
 
