@@ -37,6 +37,100 @@ const ChevronAnimation = {
   }
 };
 
+
+// Función para ocultar el warning si existe
+const hideWarning = () => {
+  try {
+    const warningElement = document.querySelector("df-messenger > df-messenger-chat-bubble")
+      ?.shadowRoot?.querySelector("#df-chat-wrapper")
+      ?.shadowRoot?.querySelector("div > df-messenger-user-input")
+      ?.shadowRoot?.querySelector("div > div.popout-wrapper.show.warning-wrapper");
+
+  
+    warningElement.style.display = 'none';
+    return true;
+    
+  } catch (error) {
+    console.error('Error hiding warning:', error);
+  }
+  return false;
+};
+
+
+
+
+const prepareForChat = (question, title) => {
+  const correctAnswerText = question.correct_answer?.text || '';
+  const titleTest = title?.title_test || '';
+
+  const chatContent = `Question: "${question.question_text}"\n` +
+    `Student Answer: "${question.student_answer?.text || 'No answer'}"\n` +
+    `Correct Answer: "${correctAnswerText}"\n` +
+    `Context: "${titleTest}"`;
+
+  copyToChatInput(chatContent);
+};
+
+const copyToChatInput = (content) => {
+  try {
+    // Primero intentamos abrir el chat si no está visible
+    const chatBubble = document.querySelector("df-messenger > df-messenger-chat-bubble");
+    if (chatBubble) {
+      const chatButton = chatBubble.shadowRoot.querySelector("div > button");
+      const btn_opened_closed = chatButton.getAttribute('aria-expanded');
+      if (chatButton) {
+        if (btn_opened_closed == 'false') {
+          // Abre el chat (simula clic en el botón del chat)
+          chatButton.click();
+        }
+
+        // Esperamos un breve momento para que el chat se abra antes de insertar el texto
+        setTimeout(() => {
+          try {
+            // Ahora intentamos encontrar el textarea dentro del chat abierto
+            const textarea = document.querySelector("df-messenger > df-messenger-chat-bubble").shadowRoot.querySelector("#df-chat-wrapper").shadowRoot.querySelector("div > df-messenger-user-input").shadowRoot.querySelector("div > div.input-box-wrapper > div.input-wrapper > div > div > textarea");
+
+            if (textarea) {
+              textarea.value = typeof content === 'string' ? content :
+                `Question: "${content.question_text}"\n` +
+                `Student Answer: "${content.student_answer?.text || 'No answer'}"\n` +
+                `Correct Answer: "${content.correct_answer?.text || ''}"\n` +
+                `Context: "${content.title?.title_test || ''}"`;
+
+              // Dispara el evento input para que el chat detecte el cambio
+              const event = new Event('input', { bubbles: true });
+              textarea.dispatchEvent(event);
+
+              // Enfoca el textarea
+              textarea.focus();
+
+              // Ahora buscamos y hacemos clic en el botón de enviar
+              setTimeout(() => {
+                try {
+                  const sendButton = document.querySelector("df-messenger > df-messenger-chat-bubble").shadowRoot.querySelector("#df-chat-wrapper").shadowRoot.querySelector("div > df-messenger-user-input").shadowRoot.querySelector("#send-icon-button");
+                  if (sendButton) {
+                    sendButton.click();
+                  }
+                } catch (sendError) {
+                  console.error('Error clicking send button:', sendError);
+                }
+              }, 200); // Pequeño delay para asegurar que el texto se ha establecido
+              
+              return;
+            }
+          } catch (innerError) {
+            console.error('Error accessing chat input:', innerError);
+          }
+        }, 300); // Pequeño delay para asegurar que el chat se ha abierto
+      }
+      hideWarning();
+    }
+  } catch (error) {
+    console.error('Error accessing chat:', error);
+  }
+};
+
+
 const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
   const [examDetails, setExamDetails] = useState(initialExamDetails);
   const [expandedComments, setExpandedComments] = useState({});
@@ -177,13 +271,13 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
               return {
                 ...question,
                 ai_comments: question.ai_comments ? JSON.parse(question.ai_comments) : null,
-              //   isIncorrect: (userRole === 'admin' || userRole === 'teacher') &&
-              //     !!question.student_answer?.option_id &&
-              //     question.student_answer?.option_id !== question.correct_answer?.option_id
-              // 
-              isIncorrect: !!question.student_answer?.option_id &&
-              question.student_answer?.option_id !== question.correct_answer?.option_id
-            
+                //   isIncorrect: (userRole === 'admin' || userRole === 'teacher') &&
+                //     !!question.student_answer?.option_id &&
+                //     question.student_answer?.option_id !== question.correct_answer?.option_id
+                // 
+                isIncorrect: !!question.student_answer?.option_id &&
+                  question.student_answer?.option_id !== question.correct_answer?.option_id
+
               };
             } catch (e) {
               console.error('Error parsing AI comments:', e);
@@ -265,39 +359,48 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
 
     if (question.ai_comments) {
       return (
-        <div>
-          <motion.button
-            onClick={() => toggleComment(questionId)}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center focus:outline-none"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {expandedComments[questionId] ? 'Hide analysis' : 'View AI analysis'}
-            <motion.svg
-              className="ml-1 h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              animate={expandedComments[questionId] ? "rotate" : "initial"}
-              variants={ChevronAnimation}
+        <div className="flex flex-col space-y-2">
+          <div>
+            <motion.button
+              onClick={() => toggleComment(questionId)}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center focus:outline-none"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </motion.svg>
-          </motion.button>
-
-          <AnimatePresence>
-            {expandedComments[questionId] && (
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                variants={DropdownAnimation}
-                className="overflow-hidden"
+              {expandedComments[questionId] ? 'Hide analysis' : 'View AI analysis'}
+              <motion.svg
+                className="ml-1 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                animate={expandedComments[questionId] ? "rotate" : "initial"}
+                variants={ChevronAnimation}
               >
-                <AICommentRenderer comment={question.ai_comments} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </motion.svg>
+            </motion.button>
+
+            <AnimatePresence>
+              {expandedComments[questionId] && (
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={DropdownAnimation}
+                  className="overflow-hidden"
+                >
+                  <AICommentRenderer comment={question.ai_comments} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <button
+            onClick={() => prepareForChat(question, title)}
+            className="text-sm text-purple-600 hover:text-purple-800 font-medium focus:outline-none text-left"
+          >
+            Ask Your AI Mentor
+          </button>
+
         </div>
       );
     }
@@ -307,24 +410,35 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
     }
 
     if (remainingRequests <= 0) {
-      return <p className="text-sm text-orange-600">Daily limit reached (5 analyses per day)</p>;
+      return <p className="text-sm text-orange-600">Daily limit reached (300 analyses per day)</p>;
     }
 
     return (
-      <button
-        onClick={() => fetchAIComment(questionId, question.question_text, question.student_answer?.text, correctAnswerText, titleTest)}
-        disabled={loadingComments[questionId]}
-        className={`text-sm ${loadingComments[questionId]
-          ? 'text-gray-500 cursor-not-allowed'
-          : 'text-blue-600 hover:text-blue-800'} font-medium focus:outline-none`}
-        title={`You have ${remainingRequests} analyses left today`}
-      >
-        {loadingComments[questionId] ? (
-          <LoadingSpinner text="Generating analysis..." />
-        ) : (
-          'Analyze with AI'
-        )}
-      </button>
+      <div className="flex flex-col space-y-2">
+        <button
+          onClick={() => fetchAIComment(questionId, question.question_text, question.student_answer?.text, correctAnswerText, titleTest)}
+          disabled={loadingComments[questionId]}
+          className={`text-sm ${loadingComments[questionId]
+            ? 'text-gray-500 cursor-not-allowed'
+            : 'text-sm text-blue-600 hover:text-blue-800'}  font-medium flex items-center focus:outline-none`}
+          title={`You have ${remainingRequests} analyses left today`}
+        >
+          {loadingComments[questionId] ? (
+            <LoadingSpinner text="Generating analysis..." />
+          ) : (
+            'Analyze with AI'
+          )}
+        </button>
+        <button
+          onClick={() => prepareForChat(question, title)}
+          disabled={loadingComments[questionId]}
+          className={`text-sm ${loadingComments[questionId]
+            ? 'text-gray-500 cursor-not-allowed'
+            : 'text-purple-600 hover:text-purple-800'} font-medium focus:outline-none text-left`}
+        >
+          Ask Your AI Mentor
+        </button>
+      </div>
     );
   }, [expandedComments, fetchAIComment, loadingComments, remainingRequests, toggleComment]);
 
@@ -471,7 +585,7 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
         </div>
 
         {/* (userRole === 'admin' || userRole === 'teacher') && incorrectQuestionsRef.current.length > 0 &&*/}
-        { incorrectQuestionsRef.current.length > 0 && (
+        {incorrectQuestionsRef.current.length > 0 && (
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrevIncorrect}
@@ -486,7 +600,6 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
                 {currentIncorrectIndex + 1}/{incorrectQuestionsRef.current.length}
               </span>
             </div>
-
             <button
               onClick={handleNextIncorrect}
               className="p-1 text-gray-600 hover:text-red-600 transition-colors"
@@ -535,6 +648,17 @@ const ViewExamDetails = ({ initialExamDetails, scrollRef, userRole }) => {
           </motion.div>
         ))}
       </div>
+
+      <df-messenger
+        location="us-east1"
+        project-id="necdiagnostics-tesis"
+        agent-id="74180c1b-a688-4176-a28d-a82b260e5c7e"
+        language-code="es"
+        max-query-length="2500">
+        <df-messenger-chat-bubble chat-title="NECBot">
+        </df-messenger-chat-bubble>
+      </df-messenger>
+
     </motion.div>
   );
 };
